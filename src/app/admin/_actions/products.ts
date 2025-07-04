@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { z } from "zod";
 import fs from "fs/promises";
 import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 const addSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -60,6 +61,8 @@ export async function addProduct(prevState: unknown, formData: FormData) {
   });
 
   console.log("Produto adicionado com sucesso:", data);
+  revalidatePath("/");
+  revalidatePath("/produtos");
 
   redirect("/admin/produtos");
 }
@@ -115,6 +118,8 @@ export async function updateProduct(
   });
 
   console.log("Produto alterado com sucesso:", data);
+  revalidatePath("/");
+  revalidatePath("/produtos");
 
   redirect("/admin/produtos");
 }
@@ -127,6 +132,9 @@ export async function toggleProductAvailability(
     where: { id },
     data: { isAvailableForPurchase },
   });
+
+  revalidatePath("/");
+  revalidatePath("/produtos");
 }
 
 export async function deleteProduct(id: string) {
@@ -137,4 +145,7 @@ export async function deleteProduct(id: string) {
 
   await fs.unlink(product.filePath);
   await fs.unlink(`public${product.imagePath}`);
+
+  revalidatePath("/");
+  revalidatePath("/produtos");
 }
