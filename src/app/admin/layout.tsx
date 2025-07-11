@@ -1,5 +1,9 @@
-import { Nav, NavLink } from "@/components/Nav";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 import { Metadata } from "next";
+import { AdminSideBar } from "./_components/AdminSidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +19,10 @@ export default function AdminLayout({
 }>) {
   return (
     <>
-      <Nav>
-        <NavLink href={"/admin"}>Dashboard</NavLink>
-        <NavLink href={"/admin/produtos"}>Produtos</NavLink>
-        <NavLink href={"/admin/clientes"}>Clientes</NavLink>
-        <NavLink href={"/admin/pedidos"}>Vendas</NavLink>
-      </Nav>
-      <div className="container m-6">{children}</div>
+      <SidebarProvider>
+        <AdminSideBar />
+        <SidebarInset>{children}</SidebarInset>
+      </SidebarProvider>
     </>
   );
 }
