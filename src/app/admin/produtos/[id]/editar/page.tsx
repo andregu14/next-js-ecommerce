@@ -1,6 +1,6 @@
 import db from "@/lib/db";
-import { PageHeader } from "../../../_components/PageHeader";
 import { ProductForm } from "../../_components/ProductForm";
+import { AdminHeader } from "@/app/admin/_components/ui/admin-header";
 
 export default async function EditProductPage(props: {
   params: { id: string };
@@ -10,7 +10,13 @@ export default async function EditProductPage(props: {
   const product = await db.product.findUnique({ where: { id } });
   return (
     <>
-      <PageHeader>Editar Produto</PageHeader>
+      <AdminHeader
+        currentPage="Editar"
+        previousPage={[
+          { title: "Dashboard", url: "/admin" },
+          { title: "Produtos", url: "/admin/produtos" },
+        ]}
+      />
       <ProductForm product={product} />
     </>
   );

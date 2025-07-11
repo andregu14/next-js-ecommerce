@@ -1,4 +1,3 @@
-import { PageHeader } from "../_components/PageHeader";
 import { DeleteDropDownItem } from "../../admin/pedidos/_components/OrderActions";
 import {
   Table,
@@ -16,6 +15,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AdminHeader } from "../_components/ui/admin-header";
 
 function getOrders() {
   return db.order.findMany({
@@ -32,7 +32,10 @@ function getOrders() {
 export default function OrdersPage() {
   return (
     <>
-      <PageHeader>Vendas</PageHeader>
+      <AdminHeader
+        currentPage="Pedidos"
+        previousPage={[{ title: "Dashboard", url: "/admin" }]}
+      />
       <OrdersTable />
     </>
   );

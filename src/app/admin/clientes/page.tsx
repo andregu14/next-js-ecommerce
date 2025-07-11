@@ -1,4 +1,3 @@
-import { PageHeader } from "../_components/PageHeader";
 import { DeleteDropDownItem } from "../../admin/clientes/_components/UsersActions";
 import {
   Table,
@@ -16,6 +15,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AdminHeader } from "../_components/ui/admin-header";
 
 function getUsers() {
   return db.user.findMany({
@@ -31,7 +31,10 @@ function getUsers() {
 export default function UsersPage() {
   return (
     <>
-      <PageHeader>Clientes</PageHeader>
+      <AdminHeader
+        currentPage="Clientes"
+        previousPage={[{ title: "Dashboard", url: "/admin" }]}
+      />
       <UsersTable />
     </>
   );
@@ -72,7 +75,7 @@ async function UsersTable() {
                   <span className="sr-only">Ações</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                 <DeleteDropDownItem id={user.id} />
+                  <DeleteDropDownItem id={user.id} />
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>

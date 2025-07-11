@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "../_components/PageHeader";
 import Link from "next/link";
 import {
   Table,
@@ -23,12 +22,16 @@ import {
   ActiveToggleDropdownItem,
   DeleteDropdownItem,
 } from "./_components/ProductActions";
+import { AdminHeader } from "../_components/ui/admin-header";
 
 export default function AdminProductsPage() {
   return (
     <>
+      <AdminHeader
+        previousPage={[{ title: "Dashboard", url: "/admin" }]}
+        currentPage="Produtos"
+      />
       <div className="flex justify-between items-center gap4'">
-        <PageHeader>Produtos</PageHeader>
         <Button asChild>
           <Link href={"/admin/produtos/novo"}>Adicionar Produto</Link>
         </Button>
@@ -52,9 +55,7 @@ async function ProductsTable() {
 
   if (products.length === 0) {
     return (
-      <div className="text-muted-foreground">
-        Nenhum produto cadastrado.
-      </div>
+      <div className="text-muted-foreground">Nenhum produto cadastrado.</div>
     );
   }
 
@@ -84,7 +85,7 @@ async function ProductsTable() {
                 </>
               ) : (
                 <>
-                  <XCircle className="stroke-destructive"/>
+                  <XCircle className="stroke-destructive" />
                   <span className="sr-only">Indisponível</span>
                 </>
               )}
@@ -95,7 +96,7 @@ async function ProductsTable() {
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <MoreVertical  className="cursor-pointer" />
+                  <MoreVertical className="cursor-pointer" />
                   <span className="sr-only">Ações</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>

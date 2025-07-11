@@ -1,10 +1,10 @@
-import { PageHeader } from "../../_components/PageHeader";
+import { AdminHeader } from "../../_components/ui/admin-header";
 import { ProductForm } from "../_components/ProductForm";
 
 export default function NewProductPage() {
   return (
     <>
-      <PageHeader>Adicionar Produto</PageHeader>
+    <AdminHeader currentPage="Novo" previousPage={[{title: "Dashboard", url: "/admin"}, {title: "Produtos", url: "/admin/produtos"}]} />
       <ProductForm />
     </>
   );
