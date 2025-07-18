@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig = {
-  desktop: {
+  clientes: {
     label: "Clientes",
     color: "var(--chart-4)",
   },
@@ -79,6 +79,7 @@ export function UsersChart({ chartData }: { chartData: ChartData[] }) {
             margin={{
               left: 12,
               right: 12,
+              top: 12
             }}
           >
             <CartesianGrid vertical={false} />
@@ -91,14 +92,14 @@ export function UsersChart({ chartData }: { chartData: ChartData[] }) {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="dot" hideLabel />}
+              content={<ChartTooltipContent indicator="dot" />}
             />
             <Area
               dataKey="clientes"
-              type="linear"
-              fill="var(--color-desktop)"
+              type="basis"
+              fill="var(--color-clientes"
               fillOpacity={0.4}
-              stroke="var(--color-desktop)"
+              stroke="var(--color-clientes)"
             />
           </AreaChart>
         </ChartContainer>

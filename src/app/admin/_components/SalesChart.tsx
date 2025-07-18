@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig = {
-  desktop: {
+  vendas: {
     label: "Vendas",
     color: "var(--chart-2)",
   },
@@ -91,14 +91,14 @@ export function SalesChart({ chartData }: { chartData: ChartData[] }) {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="dot" hideLabel />}
+              content={<ChartTooltipContent indicator="dot" />}
             />
             <Area
               dataKey="vendas"
-              type="linear"
-              fill="var(--color-desktop)"
+              type="basis"
+              fill="var(--color-vendas)"
               fillOpacity={0.4}
-              stroke="var(--color-desktop)"
+              stroke="var(--color-vendas)"
             />
           </AreaChart>
         </ChartContainer>
