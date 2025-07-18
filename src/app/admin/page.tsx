@@ -4,6 +4,9 @@ import { SalesChart } from "./_components/SalesChart";
 import { DashboardCardGroup } from "./_components/DashboardCardGroup";
 import { subMonths, startOfMonth } from "date-fns";
 import { UsersChart } from "./_components/UsersChart";
+import { DashboardDataTable } from "./_components/DashboardDataTable";
+
+import data from "./data.json";
 
 async function getSalesData() {
   const now = new Date();
@@ -49,10 +52,23 @@ async function getSalesData() {
     })
     .reduce((acc, item) => acc + (item._count ?? 0), 0);
 
+  // DataTable
+  const tableData = await db.product.findMany({
+    select: {
+      id: true,
+      name: true,
+      priceInCents: true,
+      isAvailableForPurchase: true,
+      _count: { select: { orders: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
   return {
     amount: chartData[5].vendas, // mostra o valor das vendas no mes atual
     numberOfSales,
     chartData,
+    tableData
   };
 }
 
@@ -140,6 +156,7 @@ export default async function AdminDashboard() {
             <SalesChart chartData={salesData.chartData} />
             <UsersChart chartData={userData.chartData} />
           </div>
+          <DashboardDataTable data={salesData.tableData} />
         </div>
       </div>
     </>
