@@ -117,17 +117,11 @@ export const schema = z.object({
 
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: string }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  });
-
   return (
     <Button
-      {...attributes}
-      {...listeners}
       variant="ghost"
       size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
+      className="text-muted-foreground size-7 hover:bg-transparent cursor-grab active:cursor-grabbing"
     >
       <IconGripVertical className="text-muted-foreground size-3" />
       <span className="sr-only">Arraste para reordenar</span>
@@ -136,24 +130,39 @@ function DragHandle({ id }: { id: string }) {
 }
 
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: row.original.id,
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <TableRow
-      data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
       ref={setNodeRef}
-      className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}
+      style={style}
+      {...attributes}
+      data-state={row.getIsSelected() && "selected"}
+      className={`relative ${isDragging ? "z-50 opacity-50" : "z-0"}`}
     >
       {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          {cell.column.id === "drag" ? (
+            <div {...listeners} className="cursor-grab active:cursor-grabbing">
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </div>
+          ) : (
+            flexRender(cell.column.columnDef.cell, cell.getContext())
+          )}
         </TableCell>
       ))}
     </TableRow>
@@ -185,7 +194,7 @@ export function DashboardDataTable({
   );
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.map(({ id }) => id) || [],
+    () => data.map((item) => item.id),
     [data]
   );
 
@@ -316,15 +325,23 @@ export function DashboardDataTable({
   });
 
   function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
-      });
-    }
+  const { active, over } = event;
+  
+  if (!active || !over || active.id === over.id) {
+    return;
   }
+
+  setData((prevData) => {
+    const oldIndex = prevData.findIndex((item) => item.id === active.id);
+    const newIndex = prevData.findIndex((item) => item.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) {
+      return prevData;
+    }
+    
+    return arrayMove(prevData, oldIndex, newIndex);
+  });
+}
 
   // Função para atualizar um produto
   const handleToggleAvailability = async (id: string, isAvailable: boolean) => {
@@ -439,7 +456,7 @@ export function DashboardDataTable({
                     strategy={verticalListSortingStrategy}
                   >
                     {table.getRowModel().rows.map((row) => (
-                      <DraggableRow key={row.id} row={row} />
+                      <DraggableRow key={row.original.id} row={row} />
                     ))}
                   </SortableContext>
                 ) : (
