@@ -1,23 +1,32 @@
-"use client"
+"use client";
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useTransition } from "react";
-import { deleteProduct, toggleProductAvailability } from "../../_actions/products";
+import {
+  deleteProduct,
+  toggleProductAvailability,
+} from "../../_actions/products";
 
 export function ActiveToggleDropdownItem({
   id,
   isAvailableForPurchase,
+  onToggle,
 }: {
   id: string;
   isAvailableForPurchase: boolean;
+  onToggle?: (id: string, isAvailable: boolean) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   return (
     <DropdownMenuItem
-    disabled={isPending}
+      disabled={isPending}
       onClick={() =>
         startTransition(async () => {
-          await toggleProductAvailability(id, !isAvailableForPurchase);
+          if (onToggle) {
+            onToggle(id, !isAvailableForPurchase);
+          } else {
+            await toggleProductAvailability(id, !isAvailableForPurchase);
+          }
         })
       }
     >
@@ -26,15 +35,27 @@ export function ActiveToggleDropdownItem({
   );
 }
 
-export function DeleteDropdownItem({id, disabled}: {id: string, disabled?: boolean}) {
-    const [isPending, startTransition] = useTransition();
+export function DeleteDropdownItem({
+  id,
+  disabled,
+  onDelete,
+}: {
+  id: string;
+  disabled?: boolean;
+  onDelete?: (id: string) => void;
+}) {
+  const [isPending, startTransition] = useTransition();
   return (
     <DropdownMenuItem
-    variant="destructive"
-    disabled={disabled || isPending}
+      variant="destructive"
+      disabled={disabled || isPending}
       onClick={() =>
         startTransition(async () => {
-          await deleteProduct(id);
+          if (onDelete) {
+            onDelete(id);
+          } else {
+            await deleteProduct(id);
+          }
         })
       }
     >
