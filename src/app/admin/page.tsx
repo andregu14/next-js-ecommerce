@@ -57,9 +57,11 @@ async function getSalesData() {
     select: {
       id: true,
       name: true,
+      description: true,
       priceInCents: true,
       isAvailableForPurchase: true,
       _count: { select: { orders: true } },
+      imagePath: true
     },
     orderBy: { createdAt: "asc" },
   });
