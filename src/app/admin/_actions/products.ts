@@ -70,6 +70,7 @@ export async function addProduct(prevState: unknown, formData: FormData) {
 const editSchema = addSchema.extend({
   file: z.any().optional(),
   image: z.any().optional(),
+  isAvailableForPurchase: z.string(),
 });
 
 export async function updateProduct(
@@ -105,6 +106,11 @@ export async function updateProduct(
       Buffer.from(await data.image.arrayBuffer())
     );
   }
+
+  await toggleProductAvailability(
+    id,
+    data.isAvailableForPurchase === "true" ? true : false
+  );
 
   await db.product.update({
     where: { id },
