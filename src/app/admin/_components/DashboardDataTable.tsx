@@ -61,7 +61,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
   DrawerClose,
@@ -105,14 +104,23 @@ import {
   ActiveToggleDropdownItem,
   DeleteDropdownItem,
 } from "../produtos/_components/ProductActions";
-import { deleteProduct, toggleProductAvailability } from "../_actions/products";
+import {
+  deleteProduct,
+  toggleProductAvailability,
+  updateProduct,
+} from "../_actions/products";
+import { subMonths } from "date-fns";
+import Image from "next/image";
+import { useFormStatus } from "react-dom";
 
 export const schema = z.object({
   id: z.string(),
   name: z.string(),
+  description: z.string(),
   priceInCents: z.number(),
   isAvailableForPurchase: z.boolean(),
   _count: z.object({ orders: z.number() }),
+  imagePath: z.string(),
 });
 
 // Create a separate component for the drag handle
@@ -325,23 +333,23 @@ export function DashboardDataTable({
   });
 
   function handleDragEnd(event: DragEndEvent) {
-  const { active, over } = event;
-  
-  if (!active || !over || active.id === over.id) {
-    return;
-  }
+    const { active, over } = event;
 
-  setData((prevData) => {
-    const oldIndex = prevData.findIndex((item) => item.id === active.id);
-    const newIndex = prevData.findIndex((item) => item.id === over.id);
-    
-    if (oldIndex === -1 || newIndex === -1) {
-      return prevData;
+    if (!active || !over || active.id === over.id) {
+      return;
     }
-    
-    return arrayMove(prevData, oldIndex, newIndex);
-  });
-}
+
+    setData((prevData) => {
+      const oldIndex = prevData.findIndex((item) => item.id === active.id);
+      const newIndex = prevData.findIndex((item) => item.id === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) {
+        return prevData;
+      }
+
+      return arrayMove(prevData, oldIndex, newIndex);
+    });
+  }
 
   // Função para atualizar um produto
   const handleToggleAvailability = async (id: string, isAvailable: boolean) => {
@@ -465,7 +473,7 @@ export function DashboardDataTable({
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      No results.
+                      Sem resultados.
                     </TableCell>
                   </TableRow>
                 )}
@@ -510,7 +518,7 @@ export function DashboardDataTable({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">Ir para a primeira página</span>
                 <IconChevronsLeft />
               </Button>
               <Button
@@ -520,7 +528,7 @@ export function DashboardDataTable({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">Ir para a página anterior</span>
                 <IconChevronLeft />
               </Button>
               <Button
@@ -530,7 +538,7 @@ export function DashboardDataTable({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">Ir para a proxima página</span>
                 <IconChevronRight />
               </Button>
               <Button
@@ -540,7 +548,7 @@ export function DashboardDataTable({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">Ir para a última página</span>
                 <IconChevronsRight />
               </Button>
             </div>
@@ -556,28 +564,74 @@ export function DashboardDataTable({
   );
 }
 
+const getMonth = (index: number) => {
+  const now = new Date();
+  const date = subMonths(now, 5 - index);
+  const month = date.toLocaleString("pt-BR", { month: "long" });
+  return month.charAt(0).toUpperCase() + month.slice(1);
+};
+
+// TEMP data
 const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
+  { month: getMonth(0), vendas: 80, acessos: 186 },
+  { month: getMonth(1), vendas: 200, acessos: 305 },
+  { month: getMonth(2), vendas: 120, acessos: 237 },
+  { month: getMonth(3), vendas: 73, acessos: 190 },
+  { month: getMonth(4), vendas: 130, acessos: 209 },
+  { month: getMonth(5), vendas: 140, acessos: 214 },
 ];
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
+  vendas: {
+    label: "Vendas",
     color: "var(--primary)",
   },
-  mobile: {
-    label: "Mobile",
+  acessos: {
+    label: "Acessos",
     color: "var(--primary)",
   },
 } satisfies ChartConfig;
 
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile();
+  const [name, setName] = React.useState(item.name);
+  const [status, setStatus] = React.useState(
+    item.isAvailableForPurchase ? "Habilitado" : "Desabilitado"
+  );
+  const [priceRaw, setPriceRaw] = React.useState(String(item.priceInCents));
+  const [error, action] = React.useActionState(
+    async (prevState: any, formData: FormData) => {
+      const result = await updateProduct.bind(null, item.id)(
+        prevState,
+        formData
+      );
+
+      if ("success" in result && result.success) {
+        toast.success("Produto atualizado com sucesso!", {
+          position: "top-center"
+        });
+        // Recarrega a página após um pequeno delay para mostrar o toast
+        setTimeout(() => {
+          // window.location.reload();
+        }, 1000);
+        return {};
+      }
+
+      return result || {};
+    },
+    {}
+  );
+
+  function formatInputValue(raw: string) {
+    if (!raw) return "";
+    const cents = Number(raw);
+    const reais = cents / 100;
+
+    return reais.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
@@ -589,22 +643,27 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
       <DrawerContent>
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.name}</DrawerTitle>
-          <DrawerDescription>
-            Showing total visitors for the last 6 months
-          </DrawerDescription>
+          <DrawerDescription>Vendas nos últimos 6 meses</DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           {!isMobile && (
             <>
+              <Image
+                src={item.imagePath}
+                height={225}
+                width={400}
+                alt="Imagem do produto"
+                className="w-full h-40 mx-auto my-2 rounded-lg object-contain aspect-video"
+              />
+              <Separator />
+              <div className="grid gap-2">
+                <div className="flex gap-2 leading-none font-medium">
+                  Aumento do número de acessos em 5.2% esse mês
+                  <IconTrendingUp className="size-4" />
+                </div>
+              </div>
               <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
+                <AreaChart accessibilityLayer data={chartData}>
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="month"
@@ -619,103 +678,108 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                     content={<ChartTooltipContent indicator="dot" />}
                   />
                   <Area
-                    dataKey="mobile"
+                    dataKey="vendas"
                     type="natural"
-                    fill="var(--color-mobile)"
+                    fill="var(--color-vendas)"
                     fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
+                    stroke="var(--color-vendas)"
                     stackId="a"
                   />
                   <Area
-                    dataKey="desktop"
+                    dataKey="acessos"
                     type="natural"
-                    fill="var(--color-desktop)"
+                    fill="var(--color-acessos)"
                     fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
+                    stroke="var(--color-acessos)"
                     stackId="a"
                   />
                 </AreaChart>
               </ChartContainer>
               <Separator />
-              <div className="grid gap-2">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
-                </div>
-              </div>
-              <Separator />
             </>
           )}
-          <form className="flex flex-col gap-4">
+          <form
+            id={`product-form-${item.id}`}
+            action={action}
+            className="flex flex-col gap-4"
+          >
             <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
-              <Input id="header" defaultValue={item.name} />
+              <Label htmlFor="product">Produto</Label>
+              <Input
+                id="product"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.name}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-3">
                 <Label htmlFor="status">Status</Label>
-                <Select
-                  defaultValue={
-                    item.isAvailableForPurchase ? "Habilitado" : "Desabilitado"
-                  }
-                >
+                <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Select a status" />
+                    <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Habilitado">Habilitado</SelectItem>
                     <SelectItem value="Desabilitado">Desabilitado</SelectItem>
                   </SelectContent>
                 </Select>
+                <input
+                  type="hidden"
+                  name="isAvailableForPurchase"
+                  value={status === "Habilitado" ? "true" : "false"}
+                />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col gap-3">
                 <Label htmlFor="priceInCents">Valor</Label>
-                <Input id="priceInCents" defaultValue={item.priceInCents} />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                    <Badge variant="secondary">R$</Badge>
+                  </span>
+                  <Input
+                    id="priceInCents"
+                    className="pl-14"
+                    value={formatInputValue(priceRaw)}
+                    onChange={(e) => {
+                      // Remove tudo que não for número
+                      const raw = e.target.value.replace(/\D/g, "");
+                      setPriceRaw(raw);
+                    }}
+                  />
+                  <input type="hidden" name="priceInCents" value={priceRaw} />
+                  <input
+                    type="hidden"
+                    name="description"
+                    value={item.description}
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="orders">Pedidos</Label>
-                <Input id="orders" defaultValue={item._count.orders} />
+                <Input id="orders" disabled defaultValue={item._count.orders} />
               </div>
             </div>
           </form>
         </div>
         <DrawerFooter>
-          <Button>Submit</Button>
+          <SubmitButton formId={`product-form-${item.id}`} />
           <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
+            <Button variant="outline">Voltar</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+  );
+}
+
+function SubmitButton({ formId }: { formId: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" form={formId} disabled={pending}>
+      {pending ? "Atualizando..." : "Atualizar"}
+    </Button>
   );
 }
