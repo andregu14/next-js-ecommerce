@@ -127,7 +127,7 @@ export async function updateProduct(
   revalidatePath("/");
   revalidatePath("/produtos");
 
-  redirect("/admin/produtos");
+  return { success: true };
 }
 
 export async function toggleProductAvailability(
