@@ -1,10 +1,8 @@
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Metadata } from "next";
 import { AdminSideBar } from "./_components/AdminSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +18,18 @@ export default function AdminLayout({
 }>) {
   return (
     <>
-      <SidebarProvider>
-        <AdminSideBar />
-        <SidebarInset>{children}</SidebarInset>
-        <Toaster />
-      </SidebarProvider>
+      <ThemeProvider
+        attribute={"class"}
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <SidebarProvider>
+          <AdminSideBar />
+          <SidebarInset>{children}</SidebarInset>
+          <Toaster />
+        </SidebarProvider>
+      </ThemeProvider>
     </>
   );
 }
