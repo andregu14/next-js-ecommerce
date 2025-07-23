@@ -31,6 +31,7 @@ import {
   IconDotsVertical,
   IconGripVertical,
   IconLayoutColumns,
+  IconPlus,
   IconTrendingUp,
 } from "@tabler/icons-react";
 import {
@@ -113,6 +114,7 @@ import { subMonths } from "date-fns";
 import Image from "next/image";
 import { useFormStatus } from "react-dom";
 
+// Schema for Products
 export const schema = z.object({
   id: z.string(),
   name: z.string(),
@@ -121,6 +123,16 @@ export const schema = z.object({
   isAvailableForPurchase: z.boolean(),
   _count: z.object({ orders: z.number() }),
   imagePath: z.string(),
+});
+
+export const clientSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  orders: z.array(
+    z.object({
+      pricePaidInCents: z.number(),
+    })
+  ),
 });
 
 // Create a separate component for the drag handle
@@ -137,7 +149,7 @@ function DragHandle({ id }: { id: string }) {
   );
 }
 
-function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
+function DraggableRow<T extends { id: string }>({ row }: { row: Row<T> }) {
   const {
     attributes,
     listeners,
@@ -178,22 +190,34 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 }
 
 export function DashboardDataTable({
-  data: initialData,
+  salesData: initialSalesData = [],
+  clientsData: initialClientsData = [],
+  dataType,
 }: {
-  data: z.infer<typeof schema>[];
+  salesData?: z.infer<typeof schema>[];
+  clientsData?: z.infer<typeof clientSchema>[];
+  dataType?: "sales" | "clients";
 }) {
-  const [data, setData] = React.useState(() => initialData);
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
+  // State management for Sales Table
+  const [salesData, setSalesData] = React.useState(initialSalesData);
+  const [salesSorting, setSalesSorting] = React.useState<SortingState>([]);
+  const [salesColumnFilters, setSalesColumnFilters] =
+    React.useState<ColumnFiltersState>([]);
+  const [salesColumnVisibility, setSalesColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [salesRowSelection, setSalesRowSelection] = React.useState({});
+
+  // State management for Clients Table
+  const [clientsData, setClientsData] = React.useState(initialClientsData);
+  const [clientsSorting, setClientsSorting] = React.useState<SortingState>([]);
+  const [clientsColumnFilters, setClientsColumnFilters] =
+    React.useState<ColumnFiltersState>([]);
+  const [clientsColumnVisibility, setClientsColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [clientsRowSelection, setClientsRowSelection] = React.useState({});
+
+  const [activeTab, setActiveTab] = React.useState(dataType || "sales");
+
   const sortableId = React.useId();
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -201,14 +225,19 @@ export function DashboardDataTable({
     useSensor(KeyboardSensor, {})
   );
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data.map((item) => item.id),
-    [data]
+  const salesDataIds = React.useMemo<UniqueIdentifier[]>(
+    () => salesData.map((item) => item.id),
+    [salesData]
+  );
+
+  const clientsDataIds = React.useMemo<UniqueIdentifier[]>(
+    () => clientsData.map((item) => item.id),
+    [clientsData]
   );
 
   const handleUpdateProduct = React.useCallback(
     (updateProduct: z.infer<typeof schema>) => {
-      setData((prev) =>
+      setSalesData((prev) =>
         prev.map((item) =>
           item.id === updateProduct.id ? updateProduct : item
         )
@@ -217,7 +246,8 @@ export function DashboardDataTable({
     []
   );
 
-  const columns: ColumnDef<z.infer<typeof schema>>[] = [
+  // Columns definition for Sales
+  const salesColumns: ColumnDef<z.infer<typeof schema>>[] = [
     {
       id: "drag",
       header: () => null,
@@ -320,30 +350,89 @@ export function DashboardDataTable({
     },
   ];
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      pagination,
+  // Columns definition for Clients
+  const clientColumns: ColumnDef<z.infer<typeof clientSchema>>[] = [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
     },
-    getRowId: (row) => row.id.toString(),
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    {
+      accessorKey: "email",
+      header: "Cliente",
+      cell: ({ row }) => <div>{row.original.email}</div>,
+    },
+    {
+      accessorKey: "Valor Gasto",
+      header: () => <div className="w-full text-right">Valor Gasto (R$)</div>,
+      cell: ({ row }) => (
+        <div className="w-full text-right">
+          {formatCurrency(
+            row.original.orders.reduce(
+              (sum, o) => o.pricePaidInCents + sum,
+              0
+            ) / 100
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "Pedidos",
+      header: () => <div className="w-full text-right">Pedidos</div>,
+      cell: ({ row }) => (
+        <div className="w-full text-right">
+          {formatNumber(row.original.orders.length)}
+        </div>
+      ),
+    },
+  ];
+
+  // React Table instance for Sales
+  const salesTable = useReactTable({
+    data: salesData,
+    columns: salesColumns,
+    state: {
+      sorting: salesSorting,
+      columnFilters: salesColumnFilters,
+      columnVisibility: salesColumnVisibility,
+      rowSelection: salesRowSelection,
+    },
+    onSortingChange: setSalesSorting,
+    onColumnFiltersChange: setSalesColumnFilters,
+    onColumnVisibilityChange: setSalesColumnVisibility,
+    onRowSelectionChange: setSalesRowSelection,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  // React Table instance for Clients
+  const clientsTable = useReactTable({
+    data: clientsData,
+    columns: clientColumns,
+    state: {
+      sorting: clientsSorting,
+      columnFilters: clientsColumnFilters,
+      columnVisibility: clientsColumnVisibility,
+      rowSelection: clientsRowSelection,
+    },
+    onSortingChange: setClientsSorting,
+    onColumnFiltersChange: setClientsColumnFilters,
+    onColumnVisibilityChange: setClientsColumnVisibility,
+    onRowSelectionChange: setClientsRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+  });
+
+  // Use the correct table instance based on the active tab
+  const table = activeTab === "sales" ? salesTable : clientsTable;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -352,22 +441,38 @@ export function DashboardDataTable({
       return;
     }
 
-    setData((prevData) => {
-      const oldIndex = prevData.findIndex((item) => item.id === active.id);
-      const newIndex = prevData.findIndex((item) => item.id === over.id);
+    // Explicitly handle state update for the "sales" tab
+    if (activeTab === "sales") {
+      setSalesData((prevData) => {
+        const oldIndex = prevData.findIndex((item) => item.id === active.id);
+        const newIndex = prevData.findIndex((item) => item.id === over.id);
 
-      if (oldIndex === -1 || newIndex === -1) {
-        return prevData;
-      }
+        if (oldIndex === -1 || newIndex === -1) {
+          return prevData; // Return original data if item not found
+        }
 
-      return arrayMove(prevData, oldIndex, newIndex);
-    });
+        return arrayMove(prevData, oldIndex, newIndex);
+      });
+    }
+    // Explicitly handle state update for the "clients" tab
+    else if (activeTab === "clients") {
+      setClientsData((prevData) => {
+        const oldIndex = prevData.findIndex((item) => item.id === active.id);
+        const newIndex = prevData.findIndex((item) => item.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) {
+          return prevData; // Return original data if item not found
+        }
+
+        return arrayMove(prevData, oldIndex, newIndex);
+      });
+    }
   }
 
   // Função para atualizar um produto
   const handleToggleAvailability = async (id: string, isAvailable: boolean) => {
     await toggleProductAvailability(id, isAvailable);
-    setData((prev) =>
+    setSalesData((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, isAvailableForPurchase: isAvailable } : item
       )
@@ -377,33 +482,59 @@ export function DashboardDataTable({
   // Função para deletar um produto
   const handleDeleteProduct = async (id: string) => {
     await deleteProduct(id);
-    setData((prev) => prev.filter((item) => item.id !== id));
+    setSalesData((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
-    <Tabs defaultValue="sales" className="w-full flex-col justify-start gap-6">
-      <div className="flex items-center justify-between px-4 lg:px-6">
+    <Tabs
+      defaultValue={activeTab}
+      onValueChange={(value) => setActiveTab(value as "sales" | "clients")}
+      className="w-full flex-col justify-start gap-6"
+    >
+      <div
+        className={`flex items-center ${dataType ? "justify-end" : "justify-between"}  px-4 lg:px-6`}
+      >
         <Label htmlFor="view-selector" className="sr-only">
           View
         </Label>
-        <Select defaultValue="sales">
-          <SelectTrigger
-            className="flex w-fit @4xl/main:hidden"
-            size="sm"
-            id="view-selector"
-          >
-            <SelectValue placeholder="Selecione uma tabela" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="sales">Vendas</SelectItem>
-            <SelectItem value="clients">Clientes</SelectItem>
-          </SelectContent>
-        </Select>
-        <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="sales">Vendas</TabsTrigger>
-          <TabsTrigger value="clients">Clientes</TabsTrigger>
-        </TabsList>
-        <div className="flex items-center gap-2">
+        {!dataType && (
+          <>
+            <Select
+              defaultValue="sales"
+              onValueChange={(value) =>
+                setActiveTab(value as "sales" | "clients")
+              }
+            >
+              <SelectTrigger
+                className="flex w-fit @4xl/main:hidden"
+                size="sm"
+                id="view-selector"
+              >
+                <SelectValue placeholder="Selecione uma tabela" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sales">Vendas</SelectItem>
+                <SelectItem value="clients">Clientes</SelectItem>
+              </SelectContent>
+            </Select>
+            <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
+              <TabsTrigger value="sales">Vendas</TabsTrigger>
+              <TabsTrigger value="clients">Clientes</TabsTrigger>
+            </TabsList>
+          </>
+        )}
+        <div className="flex align-middle gap-2">
+          {activeTab === "sales" && (
+            <Button variant="outline" size="sm">
+              <IconPlus />
+              <Link
+                href={"/admin/produtos/novo"}
+                className="hidden lg:inline cursor-pointer"
+              >
+                Adicionar Produto
+              </Link>
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -431,7 +562,10 @@ export function DashboardDataTable({
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {/* Displaying column header as label */}
+                      {typeof column.columnDef.header === "string"
+                        ? column.columnDef.header
+                        : column.id}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -439,6 +573,7 @@ export function DashboardDataTable({
           </DropdownMenu>
         </div>
       </div>
+      {/* Sales Tab Content */}
       <TabsContent
         value="sales"
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
@@ -449,11 +584,11 @@ export function DashboardDataTable({
             modifiers={[restrictToVerticalAxis]}
             onDragEnd={handleDragEnd}
             sensors={sensors}
-            id={sortableId}
+            id={`${sortableId}-sales`}
           >
             <Table>
               <TableHeader className="bg-muted sticky top-0 z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
+                {salesTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
@@ -471,19 +606,19 @@ export function DashboardDataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                {table.getRowModel().rows?.length ? (
+                {salesTable.getRowModel().rows?.length ? (
                   <SortableContext
-                    items={dataIds}
+                    items={salesDataIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    {table.getRowModel().rows.map((row) => (
+                    {salesTable.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.original.id} row={row} />
                     ))}
                   </SortableContext>
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={salesColumns.length}
                       className="h-24 text-center"
                     >
                       Sem resultados.
@@ -494,6 +629,7 @@ export function DashboardDataTable({
             </Table>
           </DndContext>
         </div>
+        {/* Pagination for Sales */}
         <div className="flex items-center justify-end px-4 mb-8">
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
@@ -501,14 +637,14 @@ export function DashboardDataTable({
                 Items por página
               </Label>
               <Select
-                value={`${table.getState().pagination.pageSize}`}
+                value={`${salesTable.getState().pagination.pageSize}`}
                 onValueChange={(value) => {
-                  table.setPageSize(Number(value));
+                  salesTable.setPageSize(Number(value));
                 }}
               >
                 <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                   <SelectValue
-                    placeholder={table.getState().pagination.pageSize}
+                    placeholder={salesTable.getState().pagination.pageSize}
                   />
                 </SelectTrigger>
                 <SelectContent side="top">
@@ -521,15 +657,15 @@ export function DashboardDataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Página {table.getState().pagination.pageIndex + 1} de{" "}
-              {table.getPageCount()}
+              Página {salesTable.getState().pagination.pageIndex + 1} de{" "}
+              {salesTable.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
               <Button
                 variant="outline"
                 className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
+                onClick={() => salesTable.setPageIndex(0)}
+                disabled={!salesTable.getCanPreviousPage()}
               >
                 <span className="sr-only">Ir para a primeira página</span>
                 <IconChevronsLeft />
@@ -538,8 +674,8 @@ export function DashboardDataTable({
                 variant="outline"
                 className="size-8"
                 size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+                onClick={() => salesTable.previousPage()}
+                disabled={!salesTable.getCanPreviousPage()}
               >
                 <span className="sr-only">Ir para a página anterior</span>
                 <IconChevronLeft />
@@ -548,8 +684,8 @@ export function DashboardDataTable({
                 variant="outline"
                 className="size-8"
                 size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+                onClick={() => salesTable.nextPage()}
+                disabled={!salesTable.getCanNextPage()}
               >
                 <span className="sr-only">Ir para a proxima página</span>
                 <IconChevronRight />
@@ -558,8 +694,10 @@ export function DashboardDataTable({
                 variant="outline"
                 className="hidden size-8 lg:flex"
                 size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
+                onClick={() =>
+                  salesTable.setPageIndex(salesTable.getPageCount() - 1)
+                }
+                disabled={!salesTable.getCanNextPage()}
               >
                 <span className="sr-only">Ir para a última página</span>
                 <IconChevronsRight />
@@ -568,9 +706,145 @@ export function DashboardDataTable({
           </div>
         </div>
       </TabsContent>
-      <TabsContent value="clients" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
-          <span>TODO</span>
+
+      {/* Clients Tab Content */}
+      <TabsContent
+        value="clients"
+        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
+      >
+        <div className="overflow-hidden rounded-lg border">
+          <DndContext
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+            sensors={sensors}
+            id={`${sortableId}-clients`}
+          >
+            <Table>
+              <TableHeader className="bg-muted sticky top-0 z-10">
+                {clientsTable.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id} colSpan={header.colSpan}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody className="**:data-[slot=table-cell]:first:w-8">
+                {clientsTable.getRowModel().rows?.length ? (
+                  <SortableContext
+                    items={clientsDataIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {clientsTable.getRowModel().rows.map((row) => (
+                      <DraggableRow key={row.original.id} row={row} />
+                    ))}
+                  </SortableContext>
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={clientColumns.length}
+                      className="h-24 text-center"
+                    >
+                      Sem resultados.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </DndContext>
+        </div>
+        {/* Pagination for Clients */}
+        <div className="flex items-center justify-end px-4 mb-8">
+          <div className="flex w-full items-center gap-8 lg:w-fit">
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label
+                htmlFor="rows-per-page-clients"
+                className="text-sm font-medium"
+              >
+                Items por página
+              </Label>
+              <Select
+                value={`${clientsTable.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  clientsTable.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="w-20"
+                  id="rows-per-page-clients"
+                >
+                  <SelectValue
+                    placeholder={clientsTable.getState().pagination.pageSize}
+                  />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-fit items-center justify-center text-sm font-medium">
+              Página {clientsTable.getState().pagination.pageIndex + 1} de{" "}
+              {clientsTable.getPageCount()}
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => clientsTable.setPageIndex(0)}
+                disabled={!clientsTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Ir para a primeira página</span>
+                <IconChevronsLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => clientsTable.previousPage()}
+                disabled={!clientsTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Ir para a página anterior</span>
+                <IconChevronLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => clientsTable.nextPage()}
+                disabled={!clientsTable.getCanNextPage()}
+              >
+                <span className="sr-only">Ir para a proxima página</span>
+                <IconChevronRight />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden size-8 lg:flex"
+                size="icon"
+                onClick={() =>
+                  clientsTable.setPageIndex(clientsTable.getPageCount() - 1)
+                }
+                disabled={!clientsTable.getCanNextPage()}
+              >
+                <span className="sr-only">Ir para a última página</span>
+                <IconChevronsRight />
+              </Button>
+            </div>
+          </div>
         </div>
       </TabsContent>
     </Tabs>
