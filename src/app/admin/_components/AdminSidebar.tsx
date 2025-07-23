@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   BookOpen,
-  Bot,
+  Package,
   Command,
   LifeBuoy,
   Send,
@@ -23,7 +23,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
 
 const data = {
   user: {
@@ -46,7 +45,7 @@ const data = {
     {
       title: "Produtos",
       url: "/admin/produtos",
-      icon: Bot,
+      icon: Package,
     },
     {
       title: "Clientes",
