@@ -6,7 +6,6 @@ import { subMonths, startOfMonth } from "date-fns";
 import { UsersChart } from "./_components/UsersChart";
 import { DashboardDataTable } from "./_components/DashboardDataTable";
 
-import data from "./data.json";
 
 async function getSalesData() {
   const now = new Date();
@@ -61,7 +60,7 @@ async function getSalesData() {
       priceInCents: true,
       isAvailableForPurchase: true,
       _count: { select: { orders: true } },
-      imagePath: true
+      imagePath: true,
     },
     orderBy: { createdAt: "asc" },
   });
@@ -70,7 +69,7 @@ async function getSalesData() {
     amount: chartData[5].vendas, // mostra o valor das vendas no mes atual
     numberOfSales,
     chartData,
-    tableData
+    tableData,
   };
 }
 
@@ -135,11 +134,27 @@ async function getProductData() {
   };
 }
 
+async function getUsers() {
+  const data = await db.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      orders: { select: { pricePaidInCents: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  
+  return {
+    data
+  }
+}
+
 export default async function AdminDashboard() {
-  const [salesData, userData, productData] = await Promise.all([
+  const [salesData, userData, productData, users] = await Promise.all([
     getSalesData(),
     getUserData(),
     getProductData(),
+    getUsers()
   ]);
 
   return (
@@ -158,7 +173,7 @@ export default async function AdminDashboard() {
             <SalesChart chartData={salesData.chartData} />
             <UsersChart chartData={userData.chartData} />
           </div>
-          <DashboardDataTable data={salesData.tableData} />
+          <DashboardDataTable salesData={salesData.tableData} clientsData={users.data} />
         </div>
       </div>
     </>
