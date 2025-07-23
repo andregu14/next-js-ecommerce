@@ -206,6 +206,17 @@ export function DashboardDataTable({
     [data]
   );
 
+  const handleUpdateProduct = React.useCallback(
+    (updateProduct: z.infer<typeof schema>) => {
+      setData((prev) =>
+        prev.map((item) =>
+          item.id === updateProduct.id ? updateProduct : item
+        )
+      );
+    },
+    []
+  );
+
   const columns: ColumnDef<z.infer<typeof schema>>[] = [
     {
       id: "drag",
@@ -216,7 +227,9 @@ export function DashboardDataTable({
       accessorKey: "product",
       header: "Produto",
       cell: ({ row }) => {
-        return <TableCellViewer item={row.original} />;
+        return (
+          <TableCellViewer item={row.original} onUpdate={handleUpdateProduct} />
+        );
       },
       enableHiding: false,
     },
@@ -592,7 +605,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
+function TableCellViewer({
+  item,
+  onUpdate,
+}: {
+  item: z.infer<typeof schema>;
+  onUpdate: (updatedProduct: z.infer<typeof schema>) => void;
+}) {
   const isMobile = useIsMobile();
   const [name, setName] = React.useState(item.name);
   const [status, setStatus] = React.useState(
@@ -608,16 +627,22 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
 
       if ("success" in result && result.success) {
         toast.success("Produto atualizado com sucesso!", {
-          position: "top-center"
+          position: "top-center",
         });
-        // Recarrega a página após um pequeno delay para mostrar o toast
-        setTimeout(() => {
-          // window.location.reload();
-        }, 1000);
+
+        const updatedProduct = {
+          ...item,
+          name,
+          priceInCents: Number(priceRaw),
+          isAvailableForPurchase: status === "Habilitado",
+        };
+
+        onUpdate(updatedProduct);
+
         return {};
       }
 
-      return result || {};
+      return result;
     },
     {}
   );
