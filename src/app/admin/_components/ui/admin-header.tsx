@@ -9,6 +9,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import React from "react";
+import { ModeToggle } from "../ModeToggle";
 
 type PreviousPageProps = {
   title: string;
@@ -22,7 +23,7 @@ type AdminHeaderProps = {
 
 export function AdminHeader({ currentPage, previousPage }: AdminHeaderProps) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2">
+    <header className="flex h-16 shrink-0 items-center justify-between gap-2">
       <div className="flex items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator
@@ -51,6 +52,10 @@ export function AdminHeader({ currentPage, previousPage }: AdminHeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
+      <div className="px-4">
+      <ModeToggle />
+      </div>
+
     </header>
   );
 }
