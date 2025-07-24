@@ -198,14 +198,16 @@ export function DashboardDataTable({
   clientsData?: z.infer<typeof clientSchema>[];
   dataType?: "sales" | "clients";
 }) {
-  // State management for Sales Table
-  const [salesData, setSalesData] = React.useState(initialSalesData);
-  const [salesSorting, setSalesSorting] = React.useState<SortingState>([]);
-  const [salesColumnFilters, setSalesColumnFilters] =
+  // State management for Products Table
+  const [productsData, setProductsData] = React.useState(initialProductsData);
+  const [productsSorting, setProductsSorting] = React.useState<SortingState>(
+    []
+  );
+  const [productsColumnFilters, setProductsColumnFilters] =
     React.useState<ColumnFiltersState>([]);
-  const [salesColumnVisibility, setSalesColumnVisibility] =
+  const [productsColumnVisibility, setProductsColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [salesRowSelection, setSalesRowSelection] = React.useState({});
+  const [productsRowSelection, setProductsRowSelection] = React.useState({});
 
   // State management for Clients Table
   const [clientsData, setClientsData] = React.useState(initialClientsData);
@@ -225,9 +227,9 @@ export function DashboardDataTable({
     useSensor(KeyboardSensor, {})
   );
 
-  const salesDataIds = React.useMemo<UniqueIdentifier[]>(
-    () => salesData.map((item) => item.id),
-    [salesData]
+  const productsDataIds = React.useMemo<UniqueIdentifier[]>(
+    () => productsData.map((item) => item.id),
+    [productsData]
   );
 
   const clientsDataIds = React.useMemo<UniqueIdentifier[]>(
@@ -237,7 +239,7 @@ export function DashboardDataTable({
 
   const handleUpdateProduct = React.useCallback(
     (updateProduct: z.infer<typeof schema>) => {
-      setSalesData((prev) =>
+      setProductsData((prev) =>
         prev.map((item) =>
           item.id === updateProduct.id ? updateProduct : item
         )
@@ -246,8 +248,8 @@ export function DashboardDataTable({
     []
   );
 
-  // Columns definition for Sales
-  const salesColumns: ColumnDef<z.infer<typeof schema>>[] = [
+  // Columns definition for Products
+  const productsColumns: ColumnDef<z.infer<typeof schema>>[] = [
     {
       id: "drag",
       header: () => null,
@@ -387,20 +389,20 @@ export function DashboardDataTable({
     },
   ];
 
-  // React Table instance for Sales
-  const salesTable = useReactTable({
-    data: salesData,
-    columns: salesColumns,
+  // React Table instance for Products
+  const productsTable = useReactTable({
+    data: productsData,
+    columns: productsColumns,
     state: {
-      sorting: salesSorting,
-      columnFilters: salesColumnFilters,
-      columnVisibility: salesColumnVisibility,
-      rowSelection: salesRowSelection,
+      sorting: productsSorting,
+      columnFilters: productsColumnFilters,
+      columnVisibility: productsColumnVisibility,
+      rowSelection: productsRowSelection,
     },
-    onSortingChange: setSalesSorting,
-    onColumnFiltersChange: setSalesColumnFilters,
-    onColumnVisibilityChange: setSalesColumnVisibility,
-    onRowSelectionChange: setSalesRowSelection,
+    onSortingChange: setProductsSorting,
+    onColumnFiltersChange: setProductsColumnFilters,
+    onColumnVisibilityChange: setProductsColumnVisibility,
+    onRowSelectionChange: setProductsRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -432,7 +434,7 @@ export function DashboardDataTable({
   });
 
   // Use the correct table instance based on the active tab
-  const table = activeTab === "sales" ? salesTable : clientsTable;
+  const table = activeTab === "products" ? productsTable : clientsTable;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -441,9 +443,9 @@ export function DashboardDataTable({
       return;
     }
 
-    // Explicitly handle state update for the "sales" tab
-    if (activeTab === "sales") {
-      setSalesData((prevData) => {
+    // Explicitly handle state update for the "products" tab
+    if (activeTab === "products") {
+      setProductsData((prevData) => {
         const oldIndex = prevData.findIndex((item) => item.id === active.id);
         const newIndex = prevData.findIndex((item) => item.id === over.id);
 
@@ -472,7 +474,7 @@ export function DashboardDataTable({
   // Função para atualizar um produto
   const handleToggleAvailability = async (id: string, isAvailable: boolean) => {
     await toggleProductAvailability(id, isAvailable);
-    setSalesData((prev) =>
+    setProductsData((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, isAvailableForPurchase: isAvailable } : item
       )
@@ -482,13 +484,19 @@ export function DashboardDataTable({
   // Função para deletar um produto
   const handleDeleteProduct = async (id: string) => {
     await deleteProduct(id);
-    setSalesData((prev) => prev.filter((item) => item.id !== id));
+    setProductsData((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Função para deletar um cliente
+  const handleDeleteClient = async (id: string) => {
+    await deleteUser(id);
+    setClientsData((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
     <Tabs
       defaultValue={activeTab}
-      onValueChange={(value) => setActiveTab(value as "sales" | "clients")}
+      onValueChange={(value) => setActiveTab(value as "products" | "clients")}
       className="w-full flex-col justify-start gap-6"
     >
       <div
@@ -500,9 +508,9 @@ export function DashboardDataTable({
         {!dataType && (
           <>
             <Select
-              defaultValue="sales"
+              defaultValue="products"
               onValueChange={(value) =>
-                setActiveTab(value as "sales" | "clients")
+                setActiveTab(value as "products" | "clients")
               }
             >
               <SelectTrigger
@@ -513,18 +521,18 @@ export function DashboardDataTable({
                 <SelectValue placeholder="Selecione uma tabela" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sales">Vendas</SelectItem>
+                <SelectItem value="products">Produtos</SelectItem>
                 <SelectItem value="clients">Clientes</SelectItem>
               </SelectContent>
             </Select>
             <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-              <TabsTrigger value="sales">Vendas</TabsTrigger>
+              <TabsTrigger value="products">Produtos</TabsTrigger>
               <TabsTrigger value="clients">Clientes</TabsTrigger>
             </TabsList>
           </>
         )}
         <div className="flex align-middle gap-2">
-          {activeTab === "sales" && (
+          {activeTab === "products" && (
             <Button variant="outline" size="sm">
               <IconPlus />
               <Link
@@ -573,9 +581,9 @@ export function DashboardDataTable({
           </DropdownMenu>
         </div>
       </div>
-      {/* Sales Tab Content */}
+      {/* Products Tab Content */}
       <TabsContent
-        value="sales"
+        value="products"
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
       >
         <div className="overflow-hidden rounded-lg border">
@@ -584,11 +592,11 @@ export function DashboardDataTable({
             modifiers={[restrictToVerticalAxis]}
             onDragEnd={handleDragEnd}
             sensors={sensors}
-            id={`${sortableId}-sales`}
+            id={`${sortableId}-products`}
           >
             <Table>
               <TableHeader className="bg-muted sticky top-0 z-10">
-                {salesTable.getHeaderGroups().map((headerGroup) => (
+                {productsTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
@@ -606,19 +614,19 @@ export function DashboardDataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                {salesTable.getRowModel().rows?.length ? (
+                {productsTable.getRowModel().rows?.length ? (
                   <SortableContext
-                    items={salesDataIds}
+                    items={productsDataIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    {salesTable.getRowModel().rows.map((row) => (
+                    {productsTable.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.original.id} row={row} />
                     ))}
                   </SortableContext>
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={salesColumns.length}
+                      colSpan={productsColumns.length}
                       className="h-24 text-center"
                     >
                       Sem resultados.
@@ -629,7 +637,7 @@ export function DashboardDataTable({
             </Table>
           </DndContext>
         </div>
-        {/* Pagination for Sales */}
+        {/* Pagination for Products */}
         <div className="flex items-center justify-end px-4 mb-8">
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
@@ -637,14 +645,14 @@ export function DashboardDataTable({
                 Items por página
               </Label>
               <Select
-                value={`${salesTable.getState().pagination.pageSize}`}
+                value={`${productsTable.getState().pagination.pageSize}`}
                 onValueChange={(value) => {
-                  salesTable.setPageSize(Number(value));
+                  productsTable.setPageSize(Number(value));
                 }}
               >
                 <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                   <SelectValue
-                    placeholder={salesTable.getState().pagination.pageSize}
+                    placeholder={productsTable.getState().pagination.pageSize}
                   />
                 </SelectTrigger>
                 <SelectContent side="top">
@@ -657,15 +665,15 @@ export function DashboardDataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Página {salesTable.getState().pagination.pageIndex + 1} de{" "}
-              {salesTable.getPageCount()}
+              Página {productsTable.getState().pagination.pageIndex + 1} de{" "}
+              {productsTable.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
               <Button
                 variant="outline"
                 className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => salesTable.setPageIndex(0)}
-                disabled={!salesTable.getCanPreviousPage()}
+                onClick={() => productsTable.setPageIndex(0)}
+                disabled={!productsTable.getCanPreviousPage()}
               >
                 <span className="sr-only">Ir para a primeira página</span>
                 <IconChevronsLeft />
@@ -674,8 +682,8 @@ export function DashboardDataTable({
                 variant="outline"
                 className="size-8"
                 size="icon"
-                onClick={() => salesTable.previousPage()}
-                disabled={!salesTable.getCanPreviousPage()}
+                onClick={() => productsTable.previousPage()}
+                disabled={!productsTable.getCanPreviousPage()}
               >
                 <span className="sr-only">Ir para a página anterior</span>
                 <IconChevronLeft />
@@ -684,8 +692,8 @@ export function DashboardDataTable({
                 variant="outline"
                 className="size-8"
                 size="icon"
-                onClick={() => salesTable.nextPage()}
-                disabled={!salesTable.getCanNextPage()}
+                onClick={() => productsTable.nextPage()}
+                disabled={!productsTable.getCanNextPage()}
               >
                 <span className="sr-only">Ir para a proxima página</span>
                 <IconChevronRight />
@@ -695,9 +703,9 @@ export function DashboardDataTable({
                 className="hidden size-8 lg:flex"
                 size="icon"
                 onClick={() =>
-                  salesTable.setPageIndex(salesTable.getPageCount() - 1)
+                  productsTable.setPageIndex(productsTable.getPageCount() - 1)
                 }
-                disabled={!salesTable.getCanNextPage()}
+                disabled={!productsTable.getCanNextPage()}
               >
                 <span className="sr-only">Ir para a última página</span>
                 <IconChevronsRight />
