@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import {
-  BookOpen,
+  HandCoins,
+  Users2,
   Package,
   Command,
   LifeBuoy,
   Send,
-  Settings2,
   LucideLayoutDashboard,
 } from "lucide-react";
 
@@ -35,12 +35,6 @@ const data = {
       title: "Dashboard",
       url: "/admin",
       icon: LucideLayoutDashboard,
-      items: [
-        {
-          title: "Vendas",
-          url: "/admin/pedidos",
-        },
-      ],
     },
     {
       title: "Produtos",
@@ -50,12 +44,12 @@ const data = {
     {
       title: "Clientes",
       url: "/admin/clientes",
-      icon: BookOpen,
+      icon: Users2,
     },
     {
       title: "Vendas",
       url: "/admin/pedidos",
-      icon: Settings2,
+      icon: HandCoins,
     },
   ],
   navSecondary: [
