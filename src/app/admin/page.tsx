@@ -149,12 +149,25 @@ async function getUsers() {
   }
 }
 
+async function getOrders() {
+  return db.order.findMany({
+    select: {
+      id: true,
+      pricePaidInCents: true,
+      product: { select: { name: true } },
+      user: { select: { email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export default async function AdminDashboard() {
-  const [salesData, userData, productData, users] = await Promise.all([
+  const [salesData, userData, productData, users, orders] = await Promise.all([
     getSalesData(),
     getUserData(),
     getProductData(),
-    getUsers()
+    getUsers(),
+    getOrders()
   ]);
 
   return (
@@ -173,7 +186,7 @@ export default async function AdminDashboard() {
             <SalesChart chartData={salesData.chartData} />
             <UsersChart chartData={userData.chartData} />
           </div>
-          <DashboardDataTable salesData={salesData.tableData} clientsData={users.data} />
+          <DashboardDataTable productsData={salesData.tableData} clientsData={users.data} ordersData={orders} />
         </div>
       </div>
     </>

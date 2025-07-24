@@ -113,6 +113,8 @@ import {
 import { subMonths } from "date-fns";
 import Image from "next/image";
 import { useFormStatus } from "react-dom";
+import { deleteUser } from "../_actions/users";
+import { deleteOrder } from "../_actions/orders";
 
 // Schema for Products
 export const schema = z.object({
@@ -133,6 +135,13 @@ export const clientSchema = z.object({
       pricePaidInCents: z.number(),
     })
   ),
+});
+
+export const ordersSchema = z.object({
+  id: z.string(),
+  pricePaidInCents: z.number(),
+  product: z.object({ name: z.string() }),
+  user: z.object({ email: z.string() }),
 });
 
 // Create a separate component for the drag handle
@@ -190,13 +199,15 @@ function DraggableRow<T extends { id: string }>({ row }: { row: Row<T> }) {
 }
 
 export function DashboardDataTable({
-  salesData: initialSalesData = [],
+  productsData: initialProductsData = [],
   clientsData: initialClientsData = [],
+  ordersData: initialOrdersData = [],
   dataType,
 }: {
-  salesData?: z.infer<typeof schema>[];
+  productsData?: z.infer<typeof schema>[];
   clientsData?: z.infer<typeof clientSchema>[];
-  dataType?: "sales" | "clients";
+  ordersData?: z.infer<typeof ordersSchema>[];
+  dataType?: "products" | "clients" | "orders";
 }) {
   // State management for Products Table
   const [productsData, setProductsData] = React.useState(initialProductsData);
@@ -218,7 +229,16 @@ export function DashboardDataTable({
     React.useState<VisibilityState>({});
   const [clientsRowSelection, setClientsRowSelection] = React.useState({});
 
-  const [activeTab, setActiveTab] = React.useState(dataType || "sales");
+  // State management for Orders Table
+  const [ordersData, setOrdersData] = React.useState(initialOrdersData);
+  const [ordersSorting, setOrdersSorting] = React.useState<SortingState>([]);
+  const [ordersColumnFilters, setOrdersColumnFilters] =
+    React.useState<ColumnFiltersState>([]);
+  const [ordersColumnVisibility, setOrdersColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [ordersRowSelection, setOrdersRowSelection] = React.useState({});
+
+  const [activeTab, setActiveTab] = React.useState(dataType || "products");
 
   const sortableId = React.useId();
   const sensors = useSensors(
@@ -235,6 +255,11 @@ export function DashboardDataTable({
   const clientsDataIds = React.useMemo<UniqueIdentifier[]>(
     () => clientsData.map((item) => item.id),
     [clientsData]
+  );
+
+  const ordersDataIds = React.useMemo<UniqueIdentifier[]>(
+    () => ordersData.map((item) => item.id),
+    [ordersData]
   );
 
   const handleUpdateProduct = React.useCallback(
@@ -414,6 +439,79 @@ export function DashboardDataTable({
     },
   ];
 
+  // Columns definition for Orders
+  const ordersColumns: ColumnDef<z.infer<typeof ordersSchema>>[] = [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
+    },
+    {
+      accessorKey: "id",
+      header: "ID da Venda",
+      cell: ({ row }) => (
+        <div className="font-mono text-xs">
+          {row.original.id.slice(0, 8)}...
+        </div>
+      ),
+    },
+    {
+      accessorKey: "produto",
+      header: "Produto",
+      cell: ({ row }) => <div>{row.original.product.name}</div>,
+    },
+    {
+      accessorKey: "cliente",
+      header: "Cliente",
+      cell: ({ row }) => <div>{row.original.user.email}</div>,
+    },
+    {
+      accessorKey: "valor",
+      header: () => <div className="w-full text-right">Valor Pago (R$)</div>,
+      cell: ({ row }) => (
+        <div className="w-full text-right">
+          {formatCurrency(Number(row.original.pricePaidInCents) / 100)}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                size="icon"
+              >
+                <IconDotsVertical />
+                <span className="sr-only">Ações</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem asChild>
+                <a download href={`/admin/vendas/${row.original.id}/download`}>
+                  Download
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/admin/vendas/${row.original.id}/detalhes`}>
+                  Ver Detalhes
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DeleteDropdownItem
+                id={row.original.id}
+                onDelete={handleDeleteOrder}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+
   // React Table instance for Products
   const productsTable = useReactTable({
     data: productsData,
@@ -458,8 +556,35 @@ export function DashboardDataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  // React Table instance for Orders
+  const ordersTable = useReactTable({
+    data: ordersData,
+    columns: ordersColumns,
+    state: {
+      sorting: ordersSorting,
+      columnFilters: ordersColumnFilters,
+      columnVisibility: ordersColumnVisibility,
+      rowSelection: ordersRowSelection,
+    },
+    onSortingChange: setOrdersSorting,
+    onColumnFiltersChange: setOrdersColumnFilters,
+    onColumnVisibilityChange: setOrdersColumnVisibility,
+    onRowSelectionChange: setOrdersRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+  });
+
   // Use the correct table instance based on the active tab
-  const table = activeTab === "products" ? productsTable : clientsTable;
+  const table =
+    activeTab === "products"
+      ? productsTable
+      : activeTab === "clients"
+        ? clientsTable
+        : ordersTable;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -484,6 +609,17 @@ export function DashboardDataTable({
     // Explicitly handle state update for the "clients" tab
     else if (activeTab === "clients") {
       setClientsData((prevData) => {
+        const oldIndex = prevData.findIndex((item) => item.id === active.id);
+        const newIndex = prevData.findIndex((item) => item.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) {
+          return prevData; // Return original data if item not found
+        }
+
+        return arrayMove(prevData, oldIndex, newIndex);
+      });
+    } else if (activeTab === "orders") {
+      setOrdersData((prevData) => {
         const oldIndex = prevData.findIndex((item) => item.id === active.id);
         const newIndex = prevData.findIndex((item) => item.id === over.id);
 
@@ -518,10 +654,18 @@ export function DashboardDataTable({
     setClientsData((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Função para deletar uma venda
+  const handleDeleteOrder = async (id: string) => {
+    await deleteOrder(id);
+    setOrdersData((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
     <Tabs
       defaultValue={activeTab}
-      onValueChange={(value) => setActiveTab(value as "products" | "clients")}
+      onValueChange={(value) =>
+        setActiveTab(value as "products" | "clients" | "orders")
+      }
       className="w-full flex-col justify-start gap-6"
     >
       <div
@@ -535,7 +679,7 @@ export function DashboardDataTable({
             <Select
               defaultValue="products"
               onValueChange={(value) =>
-                setActiveTab(value as "products" | "clients")
+                setActiveTab(value as "products" | "clients" | "orders")
               }
             >
               <SelectTrigger
@@ -548,11 +692,13 @@ export function DashboardDataTable({
               <SelectContent>
                 <SelectItem value="products">Produtos</SelectItem>
                 <SelectItem value="clients">Clientes</SelectItem>
+                <SelectItem value="orders">Vendas</SelectItem>
               </SelectContent>
             </Select>
             <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
               <TabsTrigger value="products">Produtos</TabsTrigger>
               <TabsTrigger value="clients">Clientes</TabsTrigger>
+              <TabsTrigger value="orders">Vendas</TabsTrigger>
             </TabsList>
           </>
         )}
@@ -872,6 +1018,146 @@ export function DashboardDataTable({
                   clientsTable.setPageIndex(clientsTable.getPageCount() - 1)
                 }
                 disabled={!clientsTable.getCanNextPage()}
+              >
+                <span className="sr-only">Ir para a última página</span>
+                <IconChevronsRight />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </TabsContent>
+      {/* Orders Tab Content */}
+      <TabsContent
+        value="orders"
+        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
+      >
+        <div className="overflow-hidden rounded-lg border">
+          <DndContext
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+            sensors={sensors}
+            id={`${sortableId}-orders`}
+          >
+            <Table>
+              <TableHeader className="bg-muted sticky top-0 z-10">
+                {ordersTable.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id} colSpan={header.colSpan}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody className="**:data-[slot=table-cell]:first:w-8">
+                {ordersTable.getRowModel().rows?.length ? (
+                  <SortableContext
+                    items={ordersDataIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {ordersTable.getRowModel().rows.map((row) => (
+                      <DraggableRow key={row.original.id} row={row} />
+                    ))}
+                  </SortableContext>
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={ordersColumns.length}
+                      className="h-24 text-center"
+                    >
+                      Sem resultados.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </DndContext>
+        </div>
+        {/* Pagination for Orders */}
+        <div className="flex items-center justify-end px-4 mb-8">
+          <div className="flex w-full items-center gap-8 lg:w-fit">
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label
+                htmlFor="rows-per-page-orders"
+                className="text-sm font-medium"
+              >
+                Items por página
+              </Label>
+              <Select
+                value={`${ordersTable.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  ordersTable.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="w-20"
+                  id="rows-per-page-orders"
+                >
+                  <SelectValue
+                    placeholder={ordersTable.getState().pagination.pageSize}
+                  />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-fit items-center justify-center text-sm font-medium">
+              Página {ordersTable.getState().pagination.pageIndex + 1} de{" "}
+              {ordersTable.getPageCount()}
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => ordersTable.setPageIndex(0)}
+                disabled={!ordersTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Ir para a primeira página</span>
+                <IconChevronsLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => ordersTable.previousPage()}
+                disabled={!ordersTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Ir para a página anterior</span>
+                <IconChevronLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => ordersTable.nextPage()}
+                disabled={!ordersTable.getCanNextPage()}
+              >
+                <span className="sr-only">Ir para a proxima página</span>
+                <IconChevronRight />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden size-8 lg:flex"
+                size="icon"
+                onClick={() =>
+                  ordersTable.setPageIndex(ordersTable.getPageCount() - 1)
+                }
+                disabled={!ordersTable.getCanNextPage()}
               >
                 <span className="sr-only">Ir para a última página</span>
                 <IconChevronsRight />
