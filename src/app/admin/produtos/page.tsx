@@ -28,7 +28,7 @@ export default async function AdminProductsPage() {
         previousPage={[{ title: "Dashboard", url: "/admin" }]}
         currentPage="Produtos"
       />
-      <DashboardDataTable salesData={products} dataType="sales" />
+      <DashboardDataTable productsData={products} dataType="products" />
     </>
   );
 }
