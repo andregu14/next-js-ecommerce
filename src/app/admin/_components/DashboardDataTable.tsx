@@ -663,6 +663,7 @@ export function DashboardDataTable({
   return (
     <Tabs
       defaultValue={activeTab}
+      value={activeTab}
       onValueChange={(value) =>
         setActiveTab(value as "products" | "clients" | "orders")
       }
@@ -672,7 +673,7 @@ export function DashboardDataTable({
         className={`flex items-center ${dataType ? "justify-end" : "justify-between"}  px-4 lg:px-6`}
       >
         <Label htmlFor="view-selector" className="sr-only">
-          View
+          Selecione a tabela
         </Label>
         {!dataType && (
           <>
@@ -708,7 +709,7 @@ export function DashboardDataTable({
               <IconPlus />
               <Link
                 href={"/admin/produtos/novo"}
-                className="hidden lg:inline cursor-pointer"
+                className=" lg:inline cursor-pointer"
               >
                 Adicionar Produto
               </Link>
