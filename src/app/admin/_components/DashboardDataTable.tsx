@@ -363,6 +363,7 @@ export function DashboardDataTable({
               <ActiveToggleDropdownItem
                 id={row.original.id}
                 isAvailableForPurchase={row.original.isAvailableForPurchase}
+                name={row.original.name}
                 onToggle={handleToggleAvailability}
               />
               <DropdownMenuSeparator />
@@ -633,31 +634,53 @@ export function DashboardDataTable({
   }
 
   // Função para atualizar um produto
-  const handleToggleAvailability = async (id: string, isAvailable: boolean) => {
+  const handleToggleAvailability = async (
+    id: string,
+    isAvailable: boolean,
+    name: string
+  ) => {
     await toggleProductAvailability(id, isAvailable);
     setProductsData((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, isAvailableForPurchase: isAvailable } : item
       )
     );
+    if (isAvailable) {
+      toast.success(`${name} habilitado!`, {
+        position: "top-center",
+      });
+    } else {
+      toast.success(`${name} desabilitado!`, {
+        position: "top-center",
+      });
+    }
   };
 
   // Função para deletar um produto
   const handleDeleteProduct = async (id: string) => {
     await deleteProduct(id);
     setProductsData((prev) => prev.filter((item) => item.id !== id));
+    toast.success("Produto deletado com sucesso!", {
+      position: "top-center",
+    });
   };
 
   // Função para deletar um cliente
   const handleDeleteClient = async (id: string) => {
     await deleteUser(id);
     setClientsData((prev) => prev.filter((item) => item.id !== id));
+    toast.success("Cliente deletado com sucesso!", {
+      position: "top-center",
+    });
   };
 
   // Função para deletar uma venda
   const handleDeleteOrder = async (id: string) => {
     await deleteOrder(id);
     setOrdersData((prev) => prev.filter((item) => item.id !== id));
+    toast.success("Venda deletada com sucesso!", {
+      position: "top-center",
+    });
   };
 
   return (
