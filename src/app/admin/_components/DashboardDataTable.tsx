@@ -1222,6 +1222,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+function FormError({ errors }: { errors?: string[] }) {
+  if (!errors || errors.length === 0) {
+    return null;
+  }
+
+  return (
+    <p className="text-sm font-medium text-destructive ">{errors.join(", ")}</p>
+  );
+}
+
 function TableCellViewer({
   item,
   onUpdate,
@@ -1235,14 +1245,32 @@ function TableCellViewer({
     item.isAvailableForPurchase ? "Habilitado" : "Desabilitado"
   );
   const [priceRaw, setPriceRaw] = React.useState(String(item.priceInCents));
+
+  type ActionState = {
+    success: boolean;
+    errors?: {
+      name?: string[];
+      description?: string[];
+      priceInCents?: string[];
+      file?: string[];
+      image?: string[];
+      isAvailableForPurchase?: string[];
+    };
+  };
+
+  const initialState: ActionState = {
+    success: false,
+    errors: {},
+  };
+
   const [error, action] = React.useActionState(
-    async (prevState: any, formData: FormData) => {
+    async (prevState: ActionState, formData: FormData) => {
       const result = await updateProduct.bind(null, item.id)(
         prevState,
         formData
       );
 
-      if ("success" in result && result.success) {
+      if (result.success) {
         toast.success("Produto atualizado com sucesso!", {
           position: "top-center",
         });
@@ -1256,12 +1284,12 @@ function TableCellViewer({
 
         onUpdate(updatedProduct);
 
-        return {};
+        return { success: true, errors: {} };
       }
 
       return result;
     },
-    {}
+    initialState
   );
 
   function formatInputValue(raw: string) {
@@ -1353,6 +1381,7 @@ function TableCellViewer({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              {!error.success && <FormError errors={error.errors?.name} />}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
@@ -1391,12 +1420,14 @@ function TableCellViewer({
                     }}
                   />
                   <input type="hidden" name="priceInCents" value={priceRaw} />
+
                   <input
                     type="hidden"
                     name="description"
                     value={item.description}
                   />
                 </div>
+                <FormError errors={error?.errors?.priceInCents} />
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="orders">Pedidos</Label>
