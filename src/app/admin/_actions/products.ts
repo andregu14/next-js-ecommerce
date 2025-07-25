@@ -80,7 +80,7 @@ export async function updateProduct(
 ) {
   const result = editSchema.safeParse(Object.fromEntries(formData.entries()));
   if (result.success === false) {
-    return result.error.formErrors.fieldErrors;
+    return { success: false, errors: result.error.formErrors.fieldErrors };
   }
 
   const data = result.data;
