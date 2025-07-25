@@ -6,15 +6,18 @@ import {
   deleteProduct,
   toggleProductAvailability,
 } from "../../_actions/products";
+import { DeleteDialog } from "../../_components/ui/alert-dialog";
 
 export function ActiveToggleDropdownItem({
   id,
   isAvailableForPurchase,
+  name,
   onToggle,
 }: {
   id: string;
   isAvailableForPurchase: boolean;
-  onToggle?: (id: string, isAvailable: boolean) => void;
+  name: string
+  onToggle?: (id: string, isAvailable: boolean, name: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   return (
@@ -23,7 +26,7 @@ export function ActiveToggleDropdownItem({
       onClick={() =>
         startTransition(async () => {
           if (onToggle) {
-            onToggle(id, !isAvailableForPurchase);
+            onToggle(id, !isAvailableForPurchase, name);
           } else {
             await toggleProductAvailability(id, !isAvailableForPurchase);
           }
@@ -45,21 +48,33 @@ export function DeleteDropdownItem({
   onDelete?: (id: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  return (
-    <DropdownMenuItem
-      variant="destructive"
-      disabled={disabled || isPending}
-      onClick={() =>
-        startTransition(async () => {
-          if (onDelete) {
-            onDelete(id);
-          } else {
-            await deleteProduct(id);
-          }
-        })
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      if (onDelete) {
+        onDelete(id);
+      } else {
+        await deleteProduct(id);
       }
+    });
+  };
+
+  return (
+    <DeleteDialog
+      title="Deletar item"
+      description="Tem certeza que deseja deletar este item? Esta ação não pode ser desfeita."
+      onConfirm={handleDelete}
+      disabled={isPending}
     >
-      Deletar
-    </DropdownMenuItem>
+      <DropdownMenuItem
+        variant="destructive"
+        disabled={disabled || isPending}
+        onSelect={(e) => {
+          e.preventDefault();
+        }}
+      >
+        {isPending ? "Deletando..." : "Deletar"}
+      </DropdownMenuItem>
+    </DeleteDialog>
   );
 }
