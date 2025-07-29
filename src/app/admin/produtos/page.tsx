@@ -13,7 +13,7 @@ export default async function AdminProductsPage() {
       isAvailableForPurchase: true,
       _count: { select: { orders: true } },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   if (products.length === 0) {

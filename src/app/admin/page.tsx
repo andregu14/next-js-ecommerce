@@ -62,7 +62,7 @@ async function getSalesData() {
       _count: { select: { orders: true } },
       imagePath: true,
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return {
