@@ -201,10 +201,15 @@ export function ProductForm() {
 
   function SubmitButton() {
     return (
-      <Button type="submit" disabled={isPending} size="lg" className="min-w-32">
+      <Button
+        type="submit"
+        disabled={isPending}
+        size="lg"
+        className="min-w-32 cursor-pointer"
+      >
         {isPending ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 dark:border-black  border-white mr-2"></div>
             Salvando...
           </>
         ) : (
@@ -215,8 +220,8 @@ export function ProductForm() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <Card>
+    <div className="*:data-[slot=card]:bg-muted dark:*:data-[slot=card]:bg-card px-4 lg:px-6  ">
+      <Card className="@container/card">
         <CardHeader>
           <CardTitle className="flex items-center gap-4">
             <Upload className="h-6 w-6" />
@@ -236,7 +241,7 @@ export function ProductForm() {
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel className="text-base font-semibold">
                         Nome do Produto *
                       </FormLabel>
@@ -244,8 +249,8 @@ export function ProductForm() {
                         <Input
                           {...field}
                           type="text"
-                          placeholder="Ex: Curso de React Avançado"
-                          className="h-12"
+                          placeholder="Ex: Livro de Receitas"
+                          className="h-12 bg-white"
                         />
                       </FormControl>
                       <FormMessage />
@@ -258,12 +263,12 @@ export function ProductForm() {
                   control={form.control}
                   name="priceInCents"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel className="text-base font-semibold">
                         Preço *
                       </FormLabel>
                       <FormControl>
-                        <div className="relative">
+                        <div className="flex items-center relative">
                           <Badge
                             variant="secondary"
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5"
@@ -272,10 +277,9 @@ export function ProductForm() {
                           </Badge>
                           <Input
                             {...field}
-                            className="h-12 pl-10"
+                            className="h-12 pl-10 bg-white"
                             placeholder="0,00"
                             onChange={(e) => {
-                              // Remove tudo que não for número
                               const raw = e.target.value.replace(/\D/g, "");
                               const formatted = formatInputValue(raw);
                               field.onChange(formatted);
@@ -294,7 +298,7 @@ export function ProductForm() {
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel className="text-base font-semibold">
                       Descrição do Produto *
                     </FormLabel>
@@ -303,7 +307,7 @@ export function ProductForm() {
                         <Textarea
                           {...field}
                           placeholder="Descreva detalhadamente o produto, seus benefícios e características..."
-                          className="min-h-32"
+                          className="min-h-32 bg-white"
                         />
                       </FormControl>
                       <div className="text-sm text-muted-foreground text-right absolute -bottom-6 right-0">
@@ -321,14 +325,14 @@ export function ProductForm() {
                   control={form.control}
                   name="image"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel className="text-base font-semibold">
                         Imagem do Produto *
                       </FormLabel>
                       <FormControl>
                         <div className="space-y-4">
                           <div
-                            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors  not-dark:bg-white"
                             onClick={() => imageInputRef.current?.click()}
                           >
                             {imagePreview ? (
@@ -375,14 +379,14 @@ export function ProductForm() {
                   control={form.control}
                   name="file"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel className="text-base font-semibold">
                         Arquivo do Produto *
                       </FormLabel>
                       <FormControl>
                         <div className="space-y-4">
                           <div
-                            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors not-dark:bg-white"
                             onClick={() => fileInputRef.current?.click()}
                           >
                             <div className="space-y-2">
