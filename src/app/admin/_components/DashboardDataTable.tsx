@@ -355,11 +355,11 @@ export function DashboardDataTable({
                   Download
                 </a>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/admin/produtos/${row.original.id}/editar`}>
-                  Editar
-                </Link>
-              </DropdownMenuItem>
+              <TableCellViewer
+                item={row.original}
+                onUpdate={handleUpdateProduct}
+                isMenuItem={true}
+              />
               <ActiveToggleDropdownItem
                 id={row.original.id}
                 isAvailableForPurchase={row.original.isAvailableForPurchase}
@@ -1235,9 +1235,11 @@ function FormError({ errors }: { errors?: string[] }) {
 function TableCellViewer({
   item,
   onUpdate,
+  isMenuItem = false,
 }: {
   item: z.infer<typeof schema>;
   onUpdate: (updatedProduct: z.infer<typeof schema>) => void;
+  isMenuItem?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [name, setName] = React.useState(item.name);
@@ -1306,9 +1308,22 @@ function TableCellViewer({
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
-        <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.name}
-        </Button>
+        {isMenuItem ? (
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+            }}
+          >
+            Editar
+          </DropdownMenuItem>
+        ) : (
+          <Button
+            variant="link"
+            className="text-foreground w-fit px-0 text-left"
+          >
+            {item.name}
+          </Button>
+        )}
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
