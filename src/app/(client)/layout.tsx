@@ -1,4 +1,4 @@
-import { Nav, NavLink } from "@/components/Nav";
+import { Nav } from "@/components/Nav";
 import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +15,7 @@ export default function Layout({
 }>) {
   return (
     <>
-      <Nav>
-        <NavLink href={"/"}>Home</NavLink>
-        <NavLink href={"/produtos"}>Produtos</NavLink>
-        <NavLink href={"/pedidos"}>Meus Pedidos</NavLink>
-      </Nav>
+      <Nav />
       <div className="container m-6">{children}</div>
     </>
   );
