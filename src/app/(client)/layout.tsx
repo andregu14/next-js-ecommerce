@@ -9,14 +9,14 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({
-  children, 
+  children,
 }: Readonly<{
-  children: React.ReactNode; 
+  children: React.ReactNode;
 }>) {
   return (
     <>
       <Nav />
-      <div className="container m-6">{children}</div>
+      <div>{children}</div>
     </>
   );
 }
