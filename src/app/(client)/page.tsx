@@ -78,19 +78,13 @@ function Hero() {
                 </Link>
               </Button>
             </div>
-            <dl className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
-              <div>
+            <dl className="mt-12 flex flex-row text-sm text-muted-foreground gap-10">
                 <dt className="sr-only">Entrega</dt>
                 <dd>Download imediato</dd>
-              </div>
-              <div>
                 <dt className="sr-only">Acesso</dt>
                 <dd>Acesso vitalício</dd>
-              </div>
-              <div>
                 <dt className="sr-only">Qualidade</dt>
                 <dd>Arquivos otimizados</dd>
-              </div>
             </dl>
           </div>
 
