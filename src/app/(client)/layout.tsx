@@ -1,3 +1,4 @@
+import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { Metadata } from "next";
 
@@ -17,6 +18,7 @@ export default function Layout({
     <>
       <Nav />
       <div>{children}</div>
+      <Footer />
     </>
   );
 }
