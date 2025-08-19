@@ -646,11 +646,11 @@ export function DashboardDataTable({
       )
     );
     if (isAvailable) {
-      toast.success(`${name} habilitado!`, {
+      toast.success(`${name} foi habilitado!`, {
         position: "top-center",
       });
     } else {
-      toast.success(`${name} desabilitado!`, {
+      toast.success(`${name} foi desabilitado!`, {
         position: "top-center",
       });
     }
