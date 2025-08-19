@@ -2,42 +2,80 @@ import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
 import cache from "@/lib/cache";
 import db from "@/lib/db";
 import { Suspense } from "react";
+import ProductsClient from "./components/ui/products-client";
 
-const getProducts = cache(() => {
-  return db.product.findMany({
-    where: {
+const PAGE_SIZE = 12;
+
+const getProductsPage = cache(
+  async (
+    cursor?: string,
+    query?: string,
+    orderBy: "name" | "createdAt" | "priceInCents" = "name"
+  ) => {
+    const where = {
       isAvailableForPurchase: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-}, ["/produtos", "getProducts"]);
+      ...(query
+        ? {
+            OR: [
+              { name: { contains: query, mode: "insensitive" } },
+              { description: { contains: query, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
 
-export default function ProductsPage() {
+    const products = await db.product.findMany({
+      where,
+      orderBy:
+        orderBy === "name"
+          ? { name: "asc" }
+          : orderBy === "createdAt"
+            ? { createdAt: "desc" }
+            : { priceInCents: "asc" },
+      take: PAGE_SIZE + 1,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        imagePath: true,
+        priceInCents: true,
+        createdAt: true,
+      },
+    });
+
+    let nextCursor: string | null = null;
+    if (products.length > PAGE_SIZE) {
+      const next = products.pop();
+      nextCursor = next!.id;
+    }
+
+    return { products, nextCursor };
+  },
+  ["/produtos", "getProductsPage"]
+);
+
+export default async function ProductsPage() {
+  const initialProducts = await getProductsPage(
+    undefined,
+    undefined,
+    "createdAt"
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Suspense
-        fallback={
-          <>
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-          </>
-        }
-      >
-        <ProductsSuspense />
+    <main>
+      <section className="mx-auto max-w-screen-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          Todos os Produtos
+        </h1>
+      </section>
+
+      <Suspense>
+        <ProductsClient initialData={initialProducts} />
       </Suspense>
-    </div>
+    </main>
   );
 }
 
-async function ProductsSuspense() {
-  const products = await getProducts();
-  return products.map((product) => (
-    <ProductCard key={product.id} {...product} />
-  ));
-}
+export type ProductsPageData = Awaited<ReturnType<typeof getProductsPage>>;
+export { getProductsPage, PAGE_SIZE };
