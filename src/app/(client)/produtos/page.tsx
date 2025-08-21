@@ -1,4 +1,3 @@
-import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
 import cache from "@/lib/cache";
 import db from "@/lib/db";
 import { Suspense } from "react";
