@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +17,14 @@ import {
   ArrowDownAZ,
   CalendarClock,
   CircleDollarSign,
+  Loader2,
 } from "lucide-react";
-import { getProductsPage, PAGE_SIZE, ProductsPageData } from "../../page";
+import {
+  getProductsPage,
+  PAGE_SIZE,
+  ProductsPageData,
+} from "../../page";
+import { loadMoreProducts } from "../../_actions/products";
 
 type Props = {
   initialData: ProductsPageData;
@@ -29,13 +35,49 @@ export default function ProductsClient({ initialData }: Props) {
   const [nextCursor, setNextCursor] = useState<string | null>(
     initialData.nextCursor
   );
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Controles
   const [query, setQuery] = useState("");
   const [orderBy, setOrderBy] = useState<"name" | "createdAt" | "priceInCents">(
     "createdAt"
   );
+
+  // Funcao para carregar mais produtos
+  const handleLoadMore = async () => {
+    if (!nextCursor || isPending) return;
+
+    startTransition(async () => {
+      try {
+        const result = await loadMoreProducts(nextCursor, query, orderBy);
+
+        // Adicionar novos produtos no fim da lista
+        setItems((prev) => [...prev, ...result.products]);
+        setNextCursor(result.nextCursor);
+      } catch (error) {
+        console.error("Erro ao carregar mais produtos:", error);
+      }
+    });
+  };
+
+  const handleFilterChange = async (
+    newQuery?: string,
+    newOrderBy?: typeof orderBy
+  ) => {
+    const finalQuery = newQuery !== undefined ? newQuery : query;
+    const finalOrderBy = newOrderBy !== undefined ? newOrderBy : orderBy;
+
+    startTransition(async () => {
+      try {
+        // Resetar para primeira pagina com novos filtros
+        const result = await loadMoreProducts("", finalQuery, finalOrderBy);
+        setItems(result.products);
+        setNextCursor(result.nextCursor);
+      } catch (error) {
+        console.error("Erro ao filtrar produtos:", error);
+      }
+    });
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -68,16 +110,23 @@ export default function ProductsClient({ initialData }: Props) {
             <div className="relative w-full sm:max-w-sm">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar PDFs..."
+                placeholder="Buscar produtos..."
                 className="pl-9"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
 
-            {/* Ordenação + contagem */}
+            {/* Ordenação */}
             <div className="flex items-center gap-3">
-              <Select value={orderBy} onValueChange={(v: any) => setOrderBy(v)}>
+              <Select
+                value={orderBy}
+                onValueChange={(v) => {
+                  const newOrderBy = v as typeof orderBy;
+                  setOrderBy(newOrderBy);
+                  handleFilterChange(undefined, newOrderBy);
+                }}
+              >
                 <SelectTrigger className="w-[190px]">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
@@ -102,9 +151,8 @@ export default function ProductsClient({ initialData }: Props) {
               </Select>
 
               <span className="text-sm text-muted-foreground">
-                Mostrando {filtered.length}
-                <span className="mx-1">de</span>
-                {items.length}
+                {filtered.length} produto{filtered.length !== 1 ? "s" : ""}{" "}
+                encontrado{filtered.length !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -131,7 +179,36 @@ export default function ProductsClient({ initialData }: Props) {
             </div>
           )}
 
-          {/* TODO Carregar mais */}
+          {/* Carregar mais */}
+          {nextCursor && (
+            <div className="flex justify-center mt-8">
+              <Button
+                onClick={handleLoadMore}
+                disabled={isPending}
+                variant="outline"
+                size="lg"
+                className="min-w-32"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Carregando...
+                  </>
+                ) : (
+                  "Ver mais"
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Loading skeletons para quando está carregando */}
+          {isPending && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductCardSkeleton key={`skeleton-${i}`} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>
