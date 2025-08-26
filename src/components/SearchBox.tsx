@@ -117,11 +117,6 @@ export function SearchBox({ className }: { className?: string }) {
             value={term}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onFocus={() => {
-              if (term.trim().length >= 2 && (results.length > 0 || loading)) {
-                setOpen(true);
-              }
-            }}
             className={cn(
               "pl-9 pr-3 h-10 rounded-full",
               "bg-muted/60 hover:bg-muted/70",
@@ -132,80 +127,82 @@ export function SearchBox({ className }: { className?: string }) {
         </div>
       </PopoverTrigger>
 
-      <PopoverContent
-        className="p-0 w-[560px]"
-        align="start"
-        sideOffset={8}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <Command shouldFilter={false}>
-          <CommandList>
-            {loading ? (
-              <div className="p-4 text-sm text-muted-foreground">
-                Carregando...
-              </div>
-            ) : results.length === 0 && term.trim().length >= 2 ? (
-              <CommandEmpty>Nenhum resultado encontrado</CommandEmpty>
-            ) : (
-              <CommandGroup heading="Produtos">
-                {results.map((p) => (
-                  <CommandItem
-                    key={p.id}
-                    value={p.name}
-                    className="p-0"
-                    onSelect={() => {
-                      setOpen(false);
-                      router.push(`/produto/${p.id}`);
-                    }}
-                  >
-                    <Link
-                      href={`/produto/${p.id}`}
-                      className="flex w-full items-center gap-3 p-3 hover:bg-accent"
-                      onClick={() => setOpen(false)}
+      {term.trim().length >= 2 && (
+        <PopoverContent
+          className="p-0 w-[560px]"
+          align="start"
+          sideOffset={8}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <Command shouldFilter={false}>
+            <CommandList>
+              {loading ? (
+                <div className="p-4 text-sm text-muted-foreground">
+                  Carregando...
+                </div>
+              ) : results.length === 0 && term.trim().length >= 2 ? (
+                <CommandEmpty>Nenhum resultado encontrado</CommandEmpty>
+              ) : (
+                <CommandGroup >
+                  {results.map((p) => (
+                    <CommandItem
+                      key={p.id}
+                      value={p.name}
+                      className="p-0"
+                      onSelect={() => {
+                        setOpen(false);
+                        router.push(`/produto/${p.id}`);
+                      }}
                     >
-                      <div className="relative h-12 w-12 overflow-hidden rounded bg-muted">
-                        {p.imagePath ? (
-                          <Image
-                            src={p.imagePath}
-                            alt={p.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{p.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(p.priceInCents / 100)}
+                      <Link
+                        href={`/produto/${p.id}`}
+                        className="flex w-full items-center gap-3 p-3 hover:bg-accent"
+                        onClick={() => setOpen(false)}
+                      >
+                        <div className="relative h-12 w-12 overflow-hidden rounded bg-muted">
+                          {p.imagePath ? (
+                            <Image
+                              src={p.imagePath}
+                              alt={p.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full" />
+                          )}
                         </div>
-                      </div>
-                    </Link>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">{p.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatCurrency(p.priceInCents / 100)}
+                          </div>
+                        </div>
+                      </Link>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </CommandList>
 
-          {term.trim().length >= 2 && (
-            <div className="border-t p-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  setOpen(false);
-                  router.push(
-                    `/produtos?query=${encodeURIComponent(term.trim())}`
-                  );
-                }}
-              >
-                Ver todos resultados para “{term.trim()}”
-              </Button>
-            </div>
-          )}
-        </Command>
-      </PopoverContent>
+            {term.trim().length >= 2 && (
+              <div className="border-t p-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setOpen(false);
+                    router.push(
+                      `/produtos?query=${encodeURIComponent(term.trim())}`
+                    );
+                  }}
+                >
+                  Ver todos resultados para “{term.trim()}”
+                </Button>
+              </div>
+            )}
+          </Command>
+        </PopoverContent>
+      )}
     </Popover>
   );
 }
