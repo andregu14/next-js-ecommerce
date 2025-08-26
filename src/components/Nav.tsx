@@ -15,6 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { NavMenu } from "./NavMenu";
+import { SearchBox } from "./SearchBox";
 
 export function Nav() {
   return (
@@ -94,19 +95,7 @@ export function Nav() {
 
           {/* Busca */}
           <div className="hidden md:flex w-full max-w-md items-center">
-            <div className="relative w-full">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar produtos..."
-                className={cn(
-                  "pl-9 pr-3 h-10 rounded-full",
-                  "bg-muted/60 hover:bg-muted/70",
-                  "focus-visible:ring-2 focus-visible:ring-primary/50",
-                  "transition-colors"
-                )}
-              />
-            </div>
+            <SearchBox className="w-full" />
           </div>
 
           {/* Ações */}
