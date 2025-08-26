@@ -132,7 +132,12 @@ export function SearchBox({ className }: { className?: string }) {
         </div>
       </PopoverTrigger>
 
-      <PopoverContent className="p-0 w-[560px]" align="start" sideOffset={8}>
+      <PopoverContent
+        className="p-0 w-[560px]"
+        align="start"
+        sideOffset={8}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <Command shouldFilter={false}>
           <CommandList>
             {loading ? (
