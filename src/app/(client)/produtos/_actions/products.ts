@@ -15,8 +15,8 @@ async function getProductsPageNoCache(
     ...(query
       ? {
           OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { description: { contains: query, mode: "insensitive" } },
+            { name: { contains: query } },
+            { description: { contains: query } },
           ],
         }
       : {}),
@@ -28,8 +28,8 @@ async function getProductsPageNoCache(
       orderBy === "name"
         ? { name: "asc" }
         : orderBy === "createdAt"
-        ? { createdAt: "desc" }
-        : { priceInCents: "asc" },
+          ? { createdAt: "desc" }
+          : { priceInCents: "asc" },
     take: PAGE_SIZE + 1,
     ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     select: {
