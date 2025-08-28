@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,29 +19,55 @@ import {
   CircleDollarSign,
   Loader2,
 } from "lucide-react";
-import {
-  getProductsPage,
-  PAGE_SIZE,
-  ProductsPageData,
-} from "../../page";
+import { ProductsPageData } from "../../page";
 import { loadMoreProducts } from "../../_actions/products";
+import { useSearchParams } from "next/navigation";
 
 type Props = {
   initialData: ProductsPageData;
+  initialQuery: string;
+  initialOrderBy: "name" | "createdAt" | "priceInCents";
 };
 
-export default function ProductsClient({ initialData }: Props) {
+export default function ProductsClient({
+  initialData,
+  initialOrderBy,
+  initialQuery,
+}: Props) {
   const [items, setItems] = useState(initialData.products);
   const [nextCursor, setNextCursor] = useState<string | null>(
     initialData.nextCursor
   );
   const [isPending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
 
   // Controles
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [orderBy, setOrderBy] = useState<"name" | "createdAt" | "priceInCents">(
-    "createdAt"
+    initialOrderBy
   );
+
+  // Atualiza o estado dos items quando a query mudar
+  useEffect(() => {
+    const urlQuery = (searchParams.get("query") || "").trim();
+    const urlOrderBy =
+      (searchParams.get("orderBy") as "name" | "createdAt" | "priceInCents") ||
+      "createdAt";
+
+    if (urlQuery !== query || urlOrderBy !== orderBy) {
+      setQuery(urlQuery);
+      setOrderBy(urlOrderBy);
+      startTransition(async () => {
+        try {
+          const result = await loadMoreProducts("", urlQuery, urlOrderBy);
+          setItems(result.products);
+          setNextCursor(result.nextCursor);
+        } catch (e) {
+          console.error("Erro ao sincronizar filtros via URL:", e);
+        }
+      });
+    }
+  }, [searchParams]);
 
   // Funcao para carregar mais produtos
   const handleLoadMore = async () => {
@@ -114,6 +140,11 @@ export default function ProductsClient({ initialData }: Props) {
                 className="pl-9"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleFilterChange(query, orderBy);
+                  }
+                }}
               />
             </div>
 
@@ -163,7 +194,12 @@ export default function ProductsClient({ initialData }: Props) {
       <section className="py-6 sm:py-8 my-12">
         <div className="mx-auto max-w-screen-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl px-4 sm:px-6 lg:px-8">
           {filtered.length === 0 ? (
-            <EmptyState onClear={() => setQuery("")} />
+            <EmptyState
+              onClear={() => {
+                setQuery("");
+                handleFilterChange("", orderBy);
+              }}
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
               {filtered.map((p) => (
