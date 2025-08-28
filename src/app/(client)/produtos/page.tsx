@@ -3,6 +3,13 @@ import db from "@/lib/db";
 import { Suspense } from "react";
 import ProductsClient from "./components/ui/products-client";
 
+type PageProps = {
+  searchParams:  {
+    query?: string
+    orderBy?: "name" | "createdAt" | "priceInCents"
+  }
+}
+
 const PAGE_SIZE = 12;
 
 const getProductsPage = cache(
@@ -54,11 +61,14 @@ const getProductsPage = cache(
   ["/produtos", "getProductsPage"]
 );
 
-export default async function ProductsPage() {
+export default async function ProductsPage({searchParams}: PageProps) {
+  const query = (searchParams.query || "").trim() || undefined
+  const orderBy = (searchParams.orderBy as "name" | "createdAt" | "priceInCents") || "name"
+
   const initialProducts = await getProductsPage(
     undefined,
-    undefined,
-    "createdAt"
+    query,
+    orderBy
   );
 
   return (
@@ -70,7 +80,7 @@ export default async function ProductsPage() {
       </section>
 
       <Suspense>
-        <ProductsClient initialData={initialProducts} />
+        <ProductsClient initialData={initialProducts} initialQuery={query || ""} initialOrderBy={orderBy} />
       </Suspense>
     </main>
   );
