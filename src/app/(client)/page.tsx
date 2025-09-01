@@ -36,7 +36,7 @@ export default function HomePage() {
 
       <ProductGridSection
         title="Mais populares"
-        hrefAll="/produtos?sort=populares"
+        hrefAll="/produtos?orderBy=priceInCents"
       >
         <Suspense fallback={<ProductGridSkeleton />}>
           <ProductSuspense productsFetcher={getMostPopularProducts} />
@@ -45,7 +45,7 @@ export default function HomePage() {
 
       <SectionDivider label="Descubra as novidades" />
 
-      <ProductGridSection title="Lançamentos" hrefAll="/produtos?sort=novos">
+      <ProductGridSection title="Lançamentos" hrefAll="/produtos?orderBy=createdAt">
         <Suspense fallback={<ProductGridSkeleton />}>
           <ProductSuspense productsFetcher={getNewestProducts} />
         </Suspense>
