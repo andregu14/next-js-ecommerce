@@ -62,8 +62,9 @@ const getProductsPage = cache(
 );
 
 export default async function ProductsPage({searchParams}: PageProps) {
-  const query = (searchParams.query || "").trim() || undefined
-  const orderBy = (searchParams.orderBy as "name" | "createdAt" | "priceInCents") || "name"
+  const params = await Promise.resolve(searchParams)
+  const query = (params?.query || "").trim() || undefined
+  const orderBy = (params?.orderBy as "name" | "createdAt" | "priceInCents") || "name"
 
   const initialProducts = await getProductsPage(
     undefined,
