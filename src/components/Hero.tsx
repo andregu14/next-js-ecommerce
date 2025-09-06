@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { CountUpNumber } from "./CountUpNumber";
 import { Button } from "./ui/button";
+import Image from "next/image";
+
+const heroImagePath = "/assets/hero.png";
 
 export function Hero() {
   return (
@@ -59,11 +62,15 @@ export function Hero() {
             </dl>
           </div>
 
-          {/* Placeholder de imagem */}
+          {/* Imagem */}
           <div className="relative aspect-[4/3] rounded-2xl bg-muted overflow-hidden">
-            <div className="absolute inset-0 grid place-items-center text-muted-foreground">
-              Capa/Ilustração
-            </div>
+            <Image
+              src={heroImagePath}
+              alt="Capa/Ilustração"
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
         </div>
       </div>
