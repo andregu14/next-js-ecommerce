@@ -3,12 +3,30 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { Metadata } from "next";
 
 type ProductsPageProps = {
   params: {
     id: string;
   };
 };
+
+export async function generateMetadata({
+  params,
+}: ProductsPageProps): Promise<Metadata> {
+  const product = await db.product.findUnique({ where: { id: params.id } });
+
+  if (!product) {
+    return {
+      title: "Produto não encontrado",
+    };
+  }
+
+  return {
+    title: `${product.name} | PDF Store`,
+    description: product.description,
+  };
+}
 
 export default async function ProductPage({ params }: ProductsPageProps) {
   const product = await db.product.findUnique({
