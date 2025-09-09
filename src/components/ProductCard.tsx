@@ -78,7 +78,7 @@ export function ProductCard(props: ProductCardProps) {
           </Button>
 
           <Button variant="outline" asChild className="flex-1">
-            <Link href={`/produtos/${id}`}>
+            <Link href={`/produto/${id}`}>
               <Eye className="w-4 h-4 mr-1" />
               Ver
             </Link>
