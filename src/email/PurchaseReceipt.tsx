@@ -40,7 +40,7 @@ export default function PurchaseReceiptEmail({
   downloadVerificationId,
 }: PurchaseReceiptEmailProps) {
   return (
-    <Html>
+    <Html lang="pt-BR">
       <Preview>
         Download {product.name} e veja o comprovante de pagamento
       </Preview>
