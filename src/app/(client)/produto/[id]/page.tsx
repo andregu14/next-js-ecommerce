@@ -14,7 +14,9 @@ type ProductsPageProps = {
 export async function generateMetadata({
   params,
 }: ProductsPageProps): Promise<Metadata> {
-  const product = await db.product.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+
+  const product = await db.product.findUnique({ where: { id: id } });
 
   if (!product) {
     return {
@@ -29,8 +31,10 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: ProductsPageProps) {
+  const { id } = await params;
+
   const product = await db.product.findUnique({
-    where: { id: params.id },
+    where: { id: id },
   });
 
   if (!product) {
