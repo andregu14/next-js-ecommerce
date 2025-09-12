@@ -239,7 +239,10 @@ export async function updateProduct(
   revalidatePath("/");
   revalidatePath("/produtos");
 
-  return { success: true };
+  return { 
+    success: true,
+    imagePath: data.image && data.image.size > 0 ? imagePath : undefined
+  };
 }
 
 export async function toggleProductAvailability(

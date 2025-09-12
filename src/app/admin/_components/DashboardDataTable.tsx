@@ -19,6 +19,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { IconCamera } from "@tabler/icons-react";
 import { CSS } from "@dnd-kit/utilities";
 import {
   IconChevronDown,
@@ -1247,9 +1248,11 @@ function TableCellViewer({
     item.isAvailableForPurchase ? "Habilitado" : "Desabilitado"
   );
   const [priceRaw, setPriceRaw] = React.useState(String(item.priceInCents));
+  const [currentImagePath, setCurrentImagePath] = React.useState(item.imagePath);
 
   type ActionState = {
     success: boolean;
+    imagePath?: string;
     errors?: {
       name?: string[];
       description?: string[];
@@ -1277,11 +1280,17 @@ function TableCellViewer({
           position: "top-center",
         });
 
+        // Se há um novo caminho de imagem no resultado, atualize o estado
+        if (result.imagePath) {
+          setCurrentImagePath(result.imagePath);
+        }
+
         const updatedProduct = {
           ...item,
           name,
           priceInCents: Number(priceRaw),
           isAvailableForPurchase: status === "Habilitado",
+          imagePath: result.imagePath || item.imagePath,
         };
 
         onUpdate(updatedProduct);
@@ -1333,13 +1342,40 @@ function TableCellViewer({
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           {!isMobile && (
             <>
-              <Image
-                src={item.imagePath}
-                height={225}
-                width={400}
-                alt="Imagem do produto"
-                className="w-full h-40 mx-auto my-2 rounded-lg object-contain aspect-video"
-              />
+              <div className="relative group">
+                <Image
+                  src={currentImagePath}
+                  height={225}
+                  width={400}
+                  alt="Imagem do produto"
+                  className="w-full h-40 mx-auto my-2 rounded-lg object-contain aspect-video"
+                />
+                <label 
+                  htmlFor="image-upload" 
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-lg"
+                >
+                  <IconCamera className="w-8 h-8 text-white" />
+                  <input
+                    id="image-upload"
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const formData = new FormData();
+                        formData.set("image", file);
+                        formData.set("name", name);
+                        formData.set("priceInCents", priceRaw);
+                        formData.set("description", item.description);
+                        formData.set("isAvailableForPurchase", status === "Habilitado" ? "true" : "false");
+                        action(formData);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
               <Separator />
               <div className="grid gap-2">
                 <div className="flex gap-2 leading-none font-medium">
