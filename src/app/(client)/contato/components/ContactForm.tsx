@@ -11,7 +11,7 @@ import { useActionState } from "react";
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} size={"lg"} className="cursor-pointer">
       {pending ? "Enviando..." : "Enviar mensagem"}
     </Button>
   );
@@ -23,13 +23,18 @@ export function ContactForm() {
   const [data, action] = useActionState(sendMessage, initialState);
 
   return (
-    <form action={action} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form action={action} className="space-y-6">
+      <div className="grid gap-6 sm:grid-cols-2">
         <div>
-          <Label htmlFor="name" className="mb-1 block">
+          <Label htmlFor="name" className="mb-2 block text-base">
             Nome
           </Label>
-          <Input id="name" name="name" placeholder="Seu nome">
+          <Input
+            id="name"
+            name="name"
+            placeholder="Seu nome"
+            className="h-12 text-base px-4"
+          >
             {data?.errors?.name && (
               <p className="mt-1 text-xs text-destructive">
                 {data.errors.name.join(", ")}
@@ -38,7 +43,7 @@ export function ContactForm() {
           </Input>
         </div>
         <div>
-          <Label htmlFor="email" className="mb-1 block">
+          <Label htmlFor="email" className="mb-2 block text-base">
             E-mail
           </Label>
           <Input
@@ -46,6 +51,7 @@ export function ContactForm() {
             name="email"
             type="email"
             placeholder="voce@exemplo.com"
+            className="h-12 text-base px-4"
           />
           {data?.errors?.email && (
             <p className="mt-1 text-xs text-destructive">
@@ -56,14 +62,19 @@ export function ContactForm() {
       </div>
 
       <div>
-        <Label htmlFor="subject" className="mb-1 block">
+        <Label htmlFor="subject" className="mb-2 block text-base">
           Assunto
         </Label>
-        <Input id="subject" name="subject" placeholder="Assunto" />
+        <Input
+          id="subject"
+          name="subject"
+          placeholder="Assunto"
+          className="h-12 text-base px-4"
+        />
       </div>
 
       <div>
-        <Label htmlFor="message" className="mb-1 block">
+        <Label htmlFor="message" className="mb-2 block text-base">
           Mensagem
         </Label>
         <Textarea
@@ -71,6 +82,7 @@ export function ContactForm() {
           name="message"
           rows={6}
           placeholder="Como podemos ajudar?"
+          className="text-base  min-[150px]:"
         />
         {data?.errors?.message && (
           <p className="mt-1 text-xs text-destructive">
