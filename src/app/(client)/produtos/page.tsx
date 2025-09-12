@@ -10,7 +10,7 @@ type PageProps = {
   }
 }
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 10;
 
 const getProductsPage = cache(
   async (
@@ -30,6 +30,7 @@ const getProductsPage = cache(
         : {}),
     };
 
+    // Pegue PAGE_SIZE + 1 itens para saber se há mais páginas
     const products = await db.product.findMany({
       where,
       orderBy:
@@ -39,7 +40,7 @@ const getProductsPage = cache(
             ? { createdAt: "desc" }
             : { priceInCents: "asc" },
       take: PAGE_SIZE + 1,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip 1 quando usar cursor para evitar duplicata
       select: {
         id: true,
         name: true,
@@ -50,10 +51,12 @@ const getProductsPage = cache(
       },
     });
 
+    // Se temos mais que PAGE_SIZE itens, há mais páginas
     let nextCursor: string | null = null;
     if (products.length > PAGE_SIZE) {
-      const next = products.pop();
-      nextCursor = next!.id;
+      const nextItem = products[PAGE_SIZE - 1]; // Use o último item da página atual como cursor
+      nextCursor = nextItem.id;
+      products.length = PAGE_SIZE;
     }
 
     return { products, nextCursor };

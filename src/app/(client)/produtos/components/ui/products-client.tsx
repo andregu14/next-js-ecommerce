@@ -77,8 +77,13 @@ export default function ProductsClient({
       try {
         const result = await loadMoreProducts(nextCursor, query, orderBy);
 
-        // Adicionar novos produtos no fim da lista
-        setItems((prev) => [...prev, ...result.products]);
+        // Garantir que não temos duplicatas por ID
+        setItems((prev) => {
+          const newItems = result.products.filter(
+            (newItem) => !prev.some((existingItem) => existingItem.id === newItem.id)
+          );
+          return [...prev, ...newItems];
+        });
         setNextCursor(result.nextCursor);
       } catch (error) {
         console.error("Erro ao carregar mais produtos:", error);
