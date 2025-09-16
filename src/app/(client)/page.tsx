@@ -8,6 +8,7 @@ import cache from "@/lib/cache";
 import db from "@/lib/db";
 import { SectionDivider } from "@/components/SectionDivider";
 import { Hero } from "@/components/Hero";
+import { ProductSection } from "@/components/ProductSection";
 
 const getMostPopularProducts = cache(
   () => {
@@ -34,22 +35,35 @@ export default function HomePage() {
     <main>
       <Hero />
 
-      <ProductGridSection
-        title="Mais populares"
-        hrefAll="/produtos?orderBy=priceInCents"
-      >
-        <Suspense fallback={<ProductGridSkeleton />}>
-          <ProductSuspense productsFetcher={getMostPopularProducts} />
-        </Suspense>
-      </ProductGridSection>
+      <ProductSection tone="vividBlue">
+        <ProductGridSection
+          title="Mais populares"
+          hrefAll="/produtos?orderBy=priceInCents"
+        >
+          <Suspense fallback={<ProductGridSkeleton />}>
+            <ProductSuspense
+              productsFetcher={getMostPopularProducts}
+              variant="popular"
+            />
+          </Suspense>
+        </ProductGridSection>
+      </ProductSection>
 
       <SectionDivider label="Descubra as novidades" />
 
-      <ProductGridSection title="Lançamentos" hrefAll="/produtos?orderBy=createdAt">
-        <Suspense fallback={<ProductGridSkeleton />}>
-          <ProductSuspense productsFetcher={getNewestProducts} />
-        </Suspense>
-      </ProductGridSection>
+      <ProductSection tone="vividSunset">
+        <ProductGridSection
+          title="Lançamentos"
+          hrefAll="/produtos?orderBy=createdAt"
+        >
+          <Suspense fallback={<ProductGridSkeleton />}>
+            <ProductSuspense
+              productsFetcher={getNewestProducts}
+              variant="new"
+            />
+          </Suspense>
+        </ProductGridSection>
+      </ProductSection>
     </main>
   );
 }
@@ -85,8 +99,10 @@ function ProductGridSection({
 
 async function ProductSuspense({
   productsFetcher,
+  variant = "popular",
 }: {
   productsFetcher: () => Promise<Product[]>;
+  variant: "popular" | "new";
 }) {
   const products = await productsFetcher();
 
@@ -110,6 +126,7 @@ async function ProductSuspense({
           description={p.description}
           priceInCents={p.priceInCents}
           imagePath={p.imagePath}
+          variant={variant}
         />
       ))}
     </div>
