@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
+import { RatingStars } from "./RatingStars";
 
 type ProductCardProps = {
   id: string;
@@ -11,6 +12,8 @@ type ProductCardProps = {
   priceInCents: number;
   imagePath?: string | null;
   variant?: "popular" | "new";
+  rating?: number;
+  reviewCount?: number;
 };
 
 export function ProductCard({
@@ -20,13 +23,13 @@ export function ProductCard({
   priceInCents,
   imagePath,
   variant,
+  rating = 2.5,
+  reviewCount = 128,
 }: ProductCardProps) {
   const price = formatCurrency(priceInCents / 100);
 
   const base =
-    "group relative overflow-hidden ring-1 ring-foreground/10 transition-transform duration-200 hover:-translate-y-0.5";
-  const cut =
-    "[clip-path:polygon(0_0,calc(100%_-_16px)_0,100%_16px,100%_100%,0_100%)]";
+    "group relative overflow-hidden ring-1 ring-foreground/10 transition-transform duration-200 hover:-translate-y-0.5 rounded-tr-4xl";
   const bg =
     variant === "popular"
       ? "bg-gradient-to-br from-sky-500/10 via-indigo-500/10 to-blue-600/10"
@@ -37,7 +40,7 @@ export function ProductCard({
   return (
     <Link
       href={`/produto/${id}`}
-      className={`${base} ${cut} ${bg}`}
+      className={`${base} ${bg}`}
       aria-label={`Ver detalhes de ${name}`}
     >
       {/* Imagem */}
@@ -60,11 +63,20 @@ export function ProductCard({
             {description}
           </p>
         ) : null}
+
+        {typeof rating === "number" && typeof reviewCount === "number" && (
+          <div className="mt-3">
+            <RatingStars
+              rating={rating}
+              count={reviewCount}
+              variant={variant === "new" ? "new" : "popular"}
+              size={16}
+            />
+          </div>
+        )}
+
         <div className="mt-3 text-lg font-bold">{price}</div>
       </div>
-
-      {/* Acento no canto cortado */}
-      <div className="pointer-events-none absolute right-0 top-0 size-6 bg-foreground/10" />
     </Link>
   );
 }
