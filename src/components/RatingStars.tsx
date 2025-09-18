@@ -40,7 +40,7 @@ export function RatingStars({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       {/* nota a esquerda */}
-      <span className="min-w-8 text-sm font-medium tabular-nums">
+      <span className="text-sm font-medium tabular-nums">
         {clamped.toFixed(1)}
       </span>
 
