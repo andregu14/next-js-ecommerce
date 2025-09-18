@@ -40,7 +40,7 @@ export function ProductCard({
   return (
     <Link
       href={`/produto/${id}`}
-      className={`${base} ${bg}`}
+      className={`${base} ${bg} grid`}
       aria-label={`Ver detalhes de ${name}`}
     >
       {/* Imagem */}
@@ -63,16 +63,19 @@ export function ProductCard({
             {description}
           </p>
         ) : null}
+      </div>
 
-        {typeof rating === "number" && typeof reviewCount === "number" && (
-          <div className="mt-3">
-            <RatingStars
-              rating={rating}
-              count={reviewCount}
-              variant={variant === "new" ? "new" : "popular"}
-              size={16}
-            />
-          </div>
+      {/* Rodape */}
+      <div className="flex-col items-center justify-between px-4 pb-4">
+        {typeof rating === "number" && typeof reviewCount === "number" ? (
+          <RatingStars
+            rating={rating}
+            count={reviewCount}
+            variant={variant === "new" ? "new" : "popular"}
+            size={16}
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">Sem avaliações</span>
         )}
 
         <div className="mt-3 text-lg font-bold">{price}</div>
