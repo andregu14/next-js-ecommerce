@@ -23,8 +23,8 @@ export function ProductCard({
   priceInCents,
   imagePath,
   variant,
-  rating = 2.5,
-  reviewCount = 128,
+  rating,
+  reviewCount,
 }: ProductCardProps) {
   const price = formatCurrency(priceInCents / 100);
 

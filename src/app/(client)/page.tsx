@@ -9,6 +9,7 @@ import db from "@/lib/db";
 import { SectionDivider } from "@/components/SectionDivider";
 import { Hero } from "@/components/Hero";
 import { ProductSection } from "@/components/ProductSection";
+import { generateMockRating } from "@/lib/mock-ratings";
 
 const getMostPopularProducts = cache(
   () => {
@@ -118,17 +119,22 @@ async function ProductSuspense({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {products.map((p) => (
-        <ProductCard
-          key={p.id}
-          id={p.id}
-          name={p.name}
-          description={p.description}
-          priceInCents={p.priceInCents}
-          imagePath={p.imagePath}
-          variant={variant}
-        />
-      ))}
+      {products.map((p) => {
+        const { rating, reviewCount } = generateMockRating();
+        return (
+          <ProductCard
+            key={p.id}
+            id={p.id}
+            name={p.name}
+            description={p.description}
+            priceInCents={p.priceInCents}
+            imagePath={p.imagePath}
+            variant={variant}
+            rating={rating}
+            reviewCount={reviewCount}
+          />
+        );
+      })}
     </div>
   );
 }
