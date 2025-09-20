@@ -11,6 +11,7 @@ type ProductCardProps = {
   name: string;
   description?: string | null;
   priceInCents: number;
+  discountCents?: number;
   imagePath?: string | null;
   variant?: "popular" | "new";
   rating?: number;
@@ -22,6 +23,7 @@ export function ProductCard({
   name,
   description,
   priceInCents,
+  discountCents,
   imagePath,
   variant,
   rating,
@@ -79,7 +81,11 @@ export function ProductCard({
           <span className="text-sm text-muted-foreground">Sem avaliações</span>
         )}
 
-        <Price cents={priceInCents} className="mt-3" />
+        <Price
+          cents={priceInCents}
+          discountCents={discountCents}
+          className="mt-3"
+        />
       </div>
     </Link>
   );
