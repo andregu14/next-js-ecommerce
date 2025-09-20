@@ -10,6 +10,7 @@ import { SectionDivider } from "@/components/SectionDivider";
 import { Hero } from "@/components/Hero";
 import { ProductSection } from "@/components/ProductSection";
 import { generateMockRating } from "@/lib/mock-ratings";
+import { generateMockDiscount } from "@/lib/mock-discount";
 
 const getMostPopularProducts = cache(
   () => {
@@ -118,7 +119,7 @@ async function ProductSuspense({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-12">
       {products.map((p) => {
         const { rating, reviewCount } = generateMockRating();
         return (
@@ -128,6 +129,7 @@ async function ProductSuspense({
             name={p.name}
             description={p.description}
             priceInCents={p.priceInCents}
+            discountCents={generateMockDiscount(p.priceInCents)}
             imagePath={p.imagePath}
             variant={variant}
             rating={rating}
