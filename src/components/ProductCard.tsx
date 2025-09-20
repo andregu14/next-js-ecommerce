@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
 import { RatingStars } from "./RatingStars";
+import { Price } from "./Price";
 
 type ProductCardProps = {
   id: string;
@@ -78,7 +79,7 @@ export function ProductCard({
           <span className="text-sm text-muted-foreground">Sem avaliações</span>
         )}
 
-        <div className="mt-3 text-lg font-bold">{price}</div>
+        <Price cents={priceInCents} className="mt-3" />
       </div>
     </Link>
   );
