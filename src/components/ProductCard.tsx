@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
 import { RatingStars } from "./RatingStars";
 import { Price } from "./Price";
+import { Skeleton } from "./ui/skeleton";
 
 type ProductCardProps = {
   id: string;
@@ -88,5 +89,30 @@ export function ProductCard({
         />
       </div>
     </Link>
+  );
+}
+
+export function ProductCardSkeleton() {
+  return (
+    <div className="group relative overflow-hidden ring-1 ring-foreground/10 rounded-tr-4xl bg-card grid">
+      {/* Imagem Skeleton */}
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <Skeleton className="h-full w-full" />
+      </div>
+
+      {/* Conteúdo Skeleton */}
+      <div className="p-4">
+        <Skeleton className="h-6 w-3/4" /> {/* Título */}
+        <Skeleton className="mt-1 h-4 w-full" /> {/* Descrição */}
+      </div>
+
+      {/* Rodapé Skeleton */}
+      <div className="flex-col items-center justify-between px-4 pb-4">
+        <Skeleton className="h-4 w-24" /> {/* Rating */}
+        <div className="mt-3">
+          <Skeleton className="h-6 w-20" /> {/* Preço */}
+        </div>
+      </div>
+    </div>
   );
 }
