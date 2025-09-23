@@ -2,13 +2,15 @@ import cache from "@/lib/cache";
 import db from "@/lib/db";
 import { Suspense } from "react";
 import ProductsClient from "./components/ui/products-client";
+import { generateMockRating } from "@/lib/mock-ratings";
+import { generateMockDiscount } from "@/lib/mock-discount";
 
 type PageProps = {
-  searchParams:  {
-    query?: string
-    orderBy?: "name" | "createdAt" | "priceInCents"
-  }
-}
+  searchParams: {
+    query?: string;
+    orderBy?: "name" | "createdAt" | "priceInCents";
+  };
+};
 
 const PAGE_SIZE = 10;
 
@@ -31,7 +33,7 @@ const getProductsPage = cache(
     };
 
     // Pegue PAGE_SIZE + 1 itens para saber se há mais páginas
-    const products = await db.product.findMany({
+    const productsRaw = await db.product.findMany({
       where,
       orderBy:
         orderBy === "name"
@@ -53,27 +55,35 @@ const getProductsPage = cache(
 
     // Se temos mais que PAGE_SIZE itens, há mais páginas
     let nextCursor: string | null = null;
-    if (products.length > PAGE_SIZE) {
-      const nextItem = products[PAGE_SIZE - 1]; // Use o último item da página atual como cursor
+    if (productsRaw.length > PAGE_SIZE) {
+      const nextItem = productsRaw[PAGE_SIZE - 1]; // Use o último item da página atual como cursor
       nextCursor = nextItem.id;
-      products.length = PAGE_SIZE;
+      productsRaw.length = PAGE_SIZE;
     }
+
+    const products = productsRaw.map((product) => {
+      const { rating, reviewCount } = generateMockRating();
+      const mockDiscount = generateMockDiscount(product.priceInCents);
+      return {
+        ...product,
+        rating: rating,
+        reviewCount: reviewCount,
+        discountCents: mockDiscount,
+      };
+    });
 
     return { products, nextCursor };
   },
   ["/produtos", "getProductsPage"]
 );
 
-export default async function ProductsPage({searchParams}: PageProps) {
-  const params = await Promise.resolve(searchParams)
-  const query = (params?.query || "").trim() || undefined
-  const orderBy = (params?.orderBy as "name" | "createdAt" | "priceInCents") || "createdAt"
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const params = await Promise.resolve(searchParams);
+  const query = (params?.query || "").trim() || undefined;
+  const orderBy =
+    (params?.orderBy as "name" | "createdAt" | "priceInCents") || "createdAt";
 
-  const initialProducts = await getProductsPage(
-    undefined,
-    query,
-    orderBy
-  );
+  const initialProducts = await getProductsPage(undefined, query, orderBy);
 
   return (
     <main>
@@ -84,7 +94,11 @@ export default async function ProductsPage({searchParams}: PageProps) {
       </section>
 
       <Suspense>
-        <ProductsClient initialData={initialProducts} initialQuery={query || ""} initialOrderBy={orderBy} />
+        <ProductsClient
+          initialData={initialProducts}
+          initialQuery={query || ""}
+          initialOrderBy={orderBy}
+        />
       </Suspense>
     </main>
   );
