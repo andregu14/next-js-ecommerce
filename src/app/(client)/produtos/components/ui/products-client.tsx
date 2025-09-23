@@ -80,7 +80,8 @@ export default function ProductsClient({
         // Garantir que não temos duplicatas por ID
         setItems((prev) => {
           const newItems = result.products.filter(
-            (newItem) => !prev.some((existingItem) => existingItem.id === newItem.id)
+            (newItem) =>
+              !prev.some((existingItem) => existingItem.id === newItem.id)
           );
           return [...prev, ...newItems];
         });
@@ -215,6 +216,9 @@ export default function ProductsClient({
                   description={p.description ?? ""}
                   imagePath={p.imagePath ?? ""}
                   priceInCents={p.priceInCents}
+                  discountCents={p.discountCents}
+                  rating={p.rating}
+                  reviewCount={p.reviewCount}
                 />
               ))}
             </div>
