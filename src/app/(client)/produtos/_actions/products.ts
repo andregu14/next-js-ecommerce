@@ -1,6 +1,8 @@
 "use server";
 
 import db from "@/lib/db";
+import { generateMockDiscount } from "@/lib/mock-discount";
+import { generateMockRating } from "@/lib/mock-ratings";
 
 const PAGE_SIZE = 12;
 
@@ -22,7 +24,7 @@ async function getProductsPageNoCache(
       : {}),
   };
 
-  const products = await db.product.findMany({
+  const productsRaw = await db.product.findMany({
     where,
     orderBy:
       orderBy === "name"
@@ -43,10 +45,21 @@ async function getProductsPageNoCache(
   });
 
   let nextCursor: string | null = null;
-  if (products.length > PAGE_SIZE) {
-    const next = products.pop();
+  if (productsRaw.length > PAGE_SIZE) {
+    const next = productsRaw.pop();
     nextCursor = next!.id;
   }
+
+  const products = productsRaw.map((product) => {
+    const { rating, reviewCount } = generateMockRating();
+    const mockDiscount = generateMockDiscount(product.priceInCents);
+    return {
+      ...product,
+      rating: rating,
+      reviewCount: reviewCount,
+      discountCents: mockDiscount,
+    };
+  });
 
   return { products, nextCursor };
 }
