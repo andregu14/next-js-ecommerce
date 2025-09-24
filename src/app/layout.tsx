@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { config } from '@fortawesome/fontawesome-svg-core'
 import '@fortawesome/fontawesome-svg-core/styles.css'
+import { Toaster } from "sonner";
 config.autoAddCss = false
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -28,6 +29,7 @@ export default function RootLayout({
         )}
       >
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
