@@ -106,7 +106,7 @@ export function ContactForm() {
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel className="text-base">Nome</FormLabel>
                 <FormControl>
                   <Input
@@ -126,7 +126,7 @@ export function ContactForm() {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel className="text-base">E-mail</FormLabel>
                 <FormControl>
                   <Input
@@ -147,7 +147,7 @@ export function ContactForm() {
           control={form.control}
           name="subject"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel className="text-base">Assunto</FormLabel>
               <FormControl>
                 <Input
@@ -167,7 +167,7 @@ export function ContactForm() {
           control={form.control}
           name="message"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel className="text-base">Mensagem</FormLabel>
               <FormControl>
                 <Textarea
