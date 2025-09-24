@@ -1,116 +1,188 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useFormStatus } from "react-dom";
 import { ContactState, sendMessage } from "../_actions/send-message";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useActionState } from "react";
+import { useActionState, useEffect, useTransition } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "sonner";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} size={"lg"} className="cursor-pointer">
-      {pending ? "Enviando..." : "Enviar mensagem"}
-    </Button>
-  );
-}
+const FormSchema = z.object({
+  name: z
+    .string()
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, { message: "Nome não pode exceder 100 caracteres" })
+    .regex(/^[a-zA-ZÀ-ÿ0-9\s\-_.]+$/, {
+      message: "Nome contém caracteres inválidos",
+    }),
+  email: z.string().email("E-mail inválido"),
+  subject: z.string().max(120).optional(),
+  message: z.string().min(10, "Mensagem muito curta"),
+});
 
 const initialState: ContactState = { ok: false };
 
+type FormData = z.infer<typeof FormSchema>;
+
 export function ContactForm() {
-  const [data, action] = useActionState(sendMessage, initialState);
+  const [isPending, startTransition] = useTransition();
+  const form = useForm<FormData>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+      subject: "",
+    },
+  });
+
+  const [state, action] = useActionState(sendMessage, initialState);
+
+  useEffect(() => {
+    if (!state.message) {
+      return;
+    }
+
+    if (state.ok) {
+      toast.success(state.message);
+      form.reset();
+    } else {
+      toast.error(state.message);
+    }
+  }, [state, form]);
+
+  // envia dados via FormData para a server action
+  function onSubmit(data: FormData) {
+    const formData = new FormData();
+
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("subject", data.subject ? data.subject : "");
+    formData.append("message", data.message);
+
+    // Chamar a action
+    startTransition(() => {
+      action(formData);
+    });
+  }
+
+  function SubmitButton() {
+    return (
+      <Button
+        type="submit"
+        disabled={isPending}
+        size={"lg"}
+        className="cursor-pointer"
+      >
+        {isPending ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 dark:border-black  border-white mr-2"></div>
+            Enviando...
+          </>
+        ) : (
+          "Enviar"
+        )}
+      </Button>
+    );
+  }
 
   return (
-    <form action={action} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <Label htmlFor="name" className="mb-2 block text-base">
-            Nome
-          </Label>
-          <Input
-            id="name"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Nome */}
+          <FormField
+            control={form.control}
             name="name"
-            placeholder="Seu nome"
-            className="h-12 text-base px-4"
-          >
-            {data?.errors?.name && (
-              <p className="mt-1 text-xs text-destructive">
-                {data.errors.name.join(", ")}
-              </p>
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base">Nome</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="text"
+                    placeholder="Seu nome"
+                    className="h-12 text-base px-4"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </Input>
-        </div>
-        <div>
-          <Label htmlFor="email" className="mb-2 block text-base">
-            E-mail
-          </Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="voce@exemplo.com"
-            className="h-12 text-base px-4"
           />
-          {data?.errors?.email && (
-            <p className="mt-1 text-xs text-destructive">
-              {data.errors.email.join(", ")}
-            </p>
-          )}
+
+          {/* Email */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base">E-mail</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="email"
+                    placeholder="voce@exemplo.com"
+                    className="h-12 text-base px-4"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-      </div>
 
-      <div>
-        <Label htmlFor="subject" className="mb-2 block text-base">
-          Assunto
-        </Label>
-        <Input
-          id="subject"
+        {/* Assunto */}
+        <FormField
+          control={form.control}
           name="subject"
-          placeholder="Assunto"
-          className="h-12 text-base px-4"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base">Assunto</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="text"
+                  placeholder="Assunto"
+                  className="h-12 text-base px-4"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div>
-        <Label htmlFor="message" className="mb-2 block text-base">
-          Mensagem
-        </Label>
-        <Textarea
-          id="message"
+        {/* Mensagem */}
+        <FormField
+          control={form.control}
           name="message"
-          rows={6}
-          placeholder="Como podemos ajudar?"
-          className="text-base  min-[150px]:"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base">Mensagem</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder="Como podemos ajudar?"
+                  className="text-base min-h-32"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {data?.errors?.message && (
-          <p className="mt-1 text-xs text-destructive">
-            {data.errors.message.join(", ")}
-          </p>
-        )}
-      </div>
 
-      {/* Honeypot (não remover o name) */}
-      <div aria-hidden="true" className="sr-only">
-        <label>
-          Não preencha este campo
-          <input tabIndex={-1} autoComplete="off" name="company" type="text" />
-        </label>
-      </div>
-
-      {data?.message && (
-        <p
-          role="status"
-          className={`text-sm ${
-            data.ok ? "text-green-600" : "text-destructive"
-          }`}
-        >
-          {data.message}
-        </p>
-      )}
-
-      <SubmitButton />
-    </form>
+        <SubmitButton />
+      </form>
+    </Form>
   );
 }
