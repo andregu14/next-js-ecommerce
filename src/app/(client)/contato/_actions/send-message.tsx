@@ -11,7 +11,6 @@ const ContactSchema = z.object({
   email: z.string().email("E-mail inválido"),
   subject: z.string().max(120).optional(),
   message: z.string().min(10, "Mensagem muito curta"),
-  company: z.string().optional(),
 });
 
 export type ContactState = {
@@ -25,20 +24,19 @@ export async function sendMessage(
   formData: FormData
 ): Promise<ContactState> {
   try {
-    const raw = Object.fromEntries(formData.entries());
-
-    const data = ContactSchema.safeParse(raw);
+    const data = ContactSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email"),
+      message: formData.get("message"),
+      subject: formData.get("subject"),
+    });
 
     if (!data.success) {
       const flattened = data.error.flatten().fieldErrors;
       return { ok: false, errors: flattened, message: "Corrija os campos." };
     }
 
-    const { name, email, subject, message, company } = data.data;
-
-    if (company && company.trim().length > 0) {
-      return { ok: true, message: "Enviado com sucesso." };
-    }
+    const { name, email, subject, message} = data.data;
 
     const emailData = await resend.emails.send({
       from: `Suporte PDF Store <${process.env.SENDER_EMAIL}>`,
@@ -49,11 +47,13 @@ export async function sendMessage(
     });
 
     if (emailData.error) {
+      console.error("Erro ao enviar email:", emailData.error);
       return { ok: false, message: "Falha ao enviar. Tente novamente." };
     }
-
-    return { ok: true, message: "Mensagem enviada. Obrigado!" };
+    
+    return { ok: true, message: "Mensagem enviada. Obrigado!"};
   } catch (error) {
+    console.error("Erro inesperado:", error);
     return { ok: false, message: "Erro inesperado. Tente novamente." };
   }
 }
