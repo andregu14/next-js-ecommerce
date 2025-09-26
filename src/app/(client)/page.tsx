@@ -38,10 +38,8 @@ export default function HomePage() {
       <Hero />
 
       <ProductSection tone="vividBlue">
-        <ProductGridSection
-          title="Mais populares"
-          hrefAll="/produtos?orderBy=priceInCents"
-        >
+        <MainCTA />
+        <ProductGridSection hrefAll="/produtos?orderBy=priceInCents">
           <Suspense fallback={<ProductGridSkeleton />}>
             <ProductSuspense
               productsFetcher={getMostPopularProducts}
@@ -75,7 +73,7 @@ function ProductGridSection({
   hrefAll,
   children,
 }: {
-  title: string;
+  title?: string;
   hrefAll: string;
   children: React.ReactNode;
 }) {
@@ -178,6 +176,39 @@ function EmptyState({
           </Button>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function MainCTA() {
+  return (
+    <div
+      className="
+      relative overflow-hidden rounded-2xl
+      bg-gradient-to-br from-indigo-500/12 via-sky-500/10 to-blue-600/12
+      ring-1 ring-foreground/10 p-6 sm:p-8 lg:p-10
+    "
+    >
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+        Turbine sua biblioteca de PDFs
+      </h2>
+      <p className="mt-2 max-w-2xl text-sm sm:text-base text-foreground/80">
+        Acesse milhares de títulos com download imediato e suporte vitalício.
+      </p>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <Link
+          href="/produtos"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-primary-foreground hover:opacity-95"
+        >
+          Explorar agora
+        </Link>
+        <Link
+          href="/ofertas"
+          className="inline-flex items-center justify-center rounded-md border border-border/60 bg-background/60 px-5 py-2.5 hover:bg-background/80"
+        >
+          Ver ofertas
+        </Link>
+      </div>
     </div>
   );
 }
