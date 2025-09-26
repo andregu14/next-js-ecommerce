@@ -40,26 +40,6 @@ export function Hero() {
               Baixe imediatamente, acesse quando quiser e organize sua
               biblioteca digital com facilidade.
             </p>
-            <div className="mt-6 flex gap-3">
-              <Button asChild size="lg">
-                <Link href="/produtos" aria-label="Explorar PDFs">
-                  Explorar PDFs
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/ofertas" aria-label="Ver ofertas de PDFs">
-                  Ofertas
-                </Link>
-              </Button>
-            </div>
-            <dl className="mt-12 flex flex-row text-sm text-muted-foreground gap-10">
-              <dt className="sr-only">Entrega</dt>
-              <dd>Download imediato</dd>
-              <dt className="sr-only">Acesso</dt>
-              <dd>Acesso vitalício</dd>
-              <dt className="sr-only">Qualidade</dt>
-              <dd>Arquivos otimizados</dd>
-            </dl>
           </div>
 
           {/* Imagem */}
