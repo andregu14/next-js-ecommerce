@@ -7,7 +7,7 @@ export default function ContactPage () {
             <p className="mt-2 text-muted-foreground">
                 Envie uma mensagem e retornaremos o mais breve possível.
             </p>
-            <div className="mt-8">
+            <div className="mt-16">
                 <ContactForm />
             </div>
         </div>
